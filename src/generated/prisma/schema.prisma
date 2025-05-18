@@ -1,0 +1,173 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id               String        @id @default(uuid())
+  name             String
+  email            String        @unique
+  password         String
+  role             Role          @default(USER)
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+  organizationId   String?
+  otp              String?
+  otpExpiry        DateTime?
+  otpVerifiedAt    DateTime?
+  twoFactorEnabled Boolean       @default(false)
+  comments         Comment[]
+  assignedTickets  Ticket[]      @relation("AssignedTickets")
+  tickets          Ticket[]      @relation("CreatedTickets")
+  organization     Organization? @relation(fields: [organizationId], references: [id])
+}
+
+model Organization {
+  id             String          @id @default(uuid())
+  name           String
+  logo           String?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  contactPersons ContactPerson[]
+  users          User[]
+  slaPolicies    SlaPolicy[]
+}
+
+model ContactPerson {
+  id             String       @id @default(uuid())
+  name           String
+  email          String
+  phoneNumber    String
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+}
+
+model Ticket {
+  id                 String     @id @default(uuid())
+  title              String
+  description        String
+  status             Status     @default(OPEN)
+  priority           Priority   @default(MEDIUM)
+  createdAt          DateTime   @default(now())
+  updatedAt          DateTime   @updatedAt
+  creatorId          String
+  assigneeId         String?
+  ticketNumber       String?    @unique
+  slaId              String?
+  responseDeadline   DateTime?
+  resolutionDeadline DateTime?
+  respondedAt        DateTime?
+  resolvedAt         DateTime?
+  slaBreached        Boolean    @default(false)
+  comments           Comment[]
+  attachments        Document[] @relation("TicketAttachments")
+  assignedTo         User?      @relation("AssignedTickets", fields: [assigneeId], references: [id])
+  createdBy          User       @relation("CreatedTickets", fields: [creatorId], references: [id])
+  slaPolicy          SlaPolicy? @relation(fields: [slaId], references: [id])
+}
+
+model Comment {
+  id          String     @id @default(uuid())
+  content     String
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  userId      String
+  ticketId    String
+  ticket      Ticket     @relation(fields: [ticketId], references: [id])
+  user        User       @relation(fields: [userId], references: [id])
+  attachments Document[] @relation("CommentAttachments")
+}
+
+model Document {
+  id        String   @id @default(uuid())
+  filename  String
+  path      String
+  mimeType  String
+  size      Int
+  createdAt DateTime @default(now())
+  ticketId  String?
+  commentId String?
+  comment   Comment? @relation("CommentAttachments", fields: [commentId], references: [id])
+  ticket    Ticket?  @relation("TicketAttachments", fields: [ticketId], references: [id])
+}
+
+model AppSetting {
+  id        String   @id @default(uuid())
+  key       String   @unique
+  value     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model TicketCounter {
+  id        String   @id @default(uuid())
+  date      String   @unique
+  counter   Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum Role {
+  USER
+  ADMIN
+  EMPLOYEE
+}
+
+enum Status {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+// SLA Models
+model SlaPolicy {
+  id                  String        @id @default(uuid())
+  name                String
+  description         String?
+  responseTimeHours   Int // Response time in hours
+  resolutionTimeHours Int // Resolution time in hours
+  active              Boolean       @default(true)
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+  priorityLevel       Priority      @default(MEDIUM) // This policy applies to which priority level
+  organizationId      String?
+  organization        Organization? @relation(fields: [organizationId], references: [id])
+  tickets             Ticket[]
+}
+
+// SLA Priority Multipliers - how much to adjust time based on priority
+model SlaPriorityMultiplier {
+  id         String   @id @default(uuid())
+  priority   Priority @unique
+  multiplier Float // 1.0 is standard, 0.5 means half the time, 2.0 means double
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+// SLA Business Hours - Define when SLA clock is ticking
+model SlaBusinessHours {
+  id          String   @id @default(uuid())
+  dayOfWeek   Int // 0-6, 0 is Sunday
+  startHour   Int // 0-23
+  startMinute Int // 0-59
+  endHour     Int // 0-23
+  endMinute   Int // 0-59
+  isWorkDay   Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}

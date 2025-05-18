@@ -1,8 +1,11 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --foreground-rgb: 0, 0, 0;
+  --background-start-rgb: 255, 255, 255;
+  --background-end-rgb: 255, 255, 255;
+  --incite-navy: 8, 9, 88; /* Deep navy color from logo */
+  --incite-red: 217, 10, 44; /* Red accent from logo */
 }
 
 @theme inline {
@@ -14,13 +17,39 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --foreground-rgb: 255, 255, 255;
+    --background-start-rgb: 0, 0, 0;
+    --background-end-rgb: 0, 0, 0;
   }
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
+  color: rgb(var(--foreground-rgb));
+  background: rgb(var(--background-start-rgb));
   font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Custom theme classes */
+.bg-incite-navy {
+  background-color: rgb(var(--incite-navy));
+}
+
+.bg-incite-red {
+  background-color: rgb(var(--incite-red));
+}
+
+.text-incite-navy {
+  color: rgb(var(--incite-navy));
+}
+
+.text-incite-red {
+  color: rgb(var(--incite-red));
+}
+
+.border-incite-navy {
+  border-color: rgb(var(--incite-navy));
+}
+
+.border-incite-red {
+  border-color: rgb(var(--incite-red));
 }

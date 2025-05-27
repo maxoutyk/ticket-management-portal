@@ -4,33 +4,8 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import AzureADProvider from "next-auth/providers/azure-ad";
 import { prisma } from "@/lib/prisma";
 
-// Extend the built-in types
-declare module "next-auth" {
-  interface User {
-    requiresTwoFactor?: boolean;
-    role: string;
-  }
-  
-  interface Session {
-    user: {
-      id: string;
-      name: string;
-      email: string;
-      role: string;
-      requiresTwoFactor?: boolean;
-    }
-  }
-}
-
-declare module "next-auth/jwt" {
-  interface JWT {
-    requiresTwoFactor?: boolean;
-    role: string;
-  }
-}
-
 // IG email domain for SSO
-const IG_EMAIL_DOMAIN = "incitegravity.com"; // Replace with your actual domain
+const IG_EMAIL_DOMAIN = "incitegravity.com";
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -76,6 +51,12 @@ export const authOptions: NextAuthOptions = {
             return null;
           }
 
+          // Check if user is approved (unless they're an admin)
+          if (user.role !== "ADMIN" && !user.isApproved) {
+            console.log("User not approved:", user.email);
+            throw new Error("Your account is pending approval.");
+          }
+
           const isPasswordValid = await compare(
             credentials.password,
             user.password
@@ -114,6 +95,7 @@ export const authOptions: NextAuthOptions = {
               email: user.email,
               name: user.name,
               role: user.role,
+              isApproved: user.isApproved,
               requiresTwoFactor: true
             };
           } 
@@ -136,7 +118,8 @@ export const authOptions: NextAuthOptions = {
                   id: user.id,
                   email: user.email,
                   name: user.name,
-                  role: user.role
+                  role: user.role,
+                  isApproved: user.isApproved
                 };
               }
               
@@ -175,6 +158,7 @@ export const authOptions: NextAuthOptions = {
               email: user.email,
               name: user.name,
               role: user.role,
+              isApproved: user.isApproved
               // No requiresTwoFactor flag means 2FA is complete
             };
           }
@@ -184,9 +168,13 @@ export const authOptions: NextAuthOptions = {
             email: user.email,
             name: user.name,
             role: user.role,
+            isApproved: user.isApproved
           };
         } catch (error) {
           console.error("Auth error:", error);
+          if (error instanceof Error) {
+            throw error; // Re-throw the error to show the message to the user
+          }
           return null;
         }
       },
@@ -221,16 +209,26 @@ export const authOptions: NextAuthOptions = {
                 approvedAt: new Date(),
               },
             });
+          } else if (!existingUser.isApproved && existingUser.role !== "ADMIN") {
+            // Check approval status for existing users
+            throw new Error("Your account is pending approval.");
           }
 
           return true;
         } catch (error) {
           console.error("Error in Microsoft SSO sign in:", error);
+          if (error instanceof Error) {
+            throw error; // Re-throw the error to show the message to the user
+          }
           return false;
         }
       }
 
-      // For credentials sign in, always return true as the authorize function handles validation
+      // For credentials sign in, check if the user is approved
+      if (user.role !== "ADMIN" && !user.isApproved) {
+        throw new Error("Your account is pending approval.");
+      }
+
       return true;
     },
     async jwt({ token, user, account }) {
@@ -239,6 +237,7 @@ export const authOptions: NextAuthOptions = {
         token.email = user.email;
         token.name = user.name;
         token.role = user.role || "EMPLOYEE"; // Default to EMPLOYEE role for SSO
+        token.isApproved = user.isApproved;
         if ('requiresTwoFactor' in user) {
           token.requiresTwoFactor = user.requiresTwoFactor;
         }
@@ -248,11 +247,12 @@ export const authOptions: NextAuthOptions = {
       if (account?.provider === "azure-ad") {
         const dbUser = await prisma.user.findUnique({
           where: { email: token.email! },
-          select: { id: true, role: true },
+          select: { id: true, role: true, isApproved: true },
         });
         if (dbUser) {
           token.id = dbUser.id;
           token.role = dbUser.role;
+          token.isApproved = dbUser.isApproved;
         }
       }
 
@@ -265,6 +265,7 @@ export const authOptions: NextAuthOptions = {
         session.user.name = token.name as string;
         session.user.role = token.role as string;
         session.user.requiresTwoFactor = token.requiresTwoFactor;
+        session.user.isApproved = token.isApproved;
       }
       return session;
     },

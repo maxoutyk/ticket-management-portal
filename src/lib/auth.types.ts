@@ -5,6 +5,7 @@ declare module "next-auth" {
     id: string;
     role: string;
     requiresTwoFactor?: boolean;
+    isApproved?: boolean;
   }
 
   interface Session {
@@ -14,6 +15,7 @@ declare module "next-auth" {
       email: string;
       role: string;
       requiresTwoFactor?: boolean;
+      isApproved?: boolean;
     }
   }
 }
@@ -23,5 +25,6 @@ declare module "next-auth/jwt" {
     id: string;
     role: string;
     requiresTwoFactor?: boolean;
+    isApproved?: boolean;
   }
 } 

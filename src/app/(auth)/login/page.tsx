@@ -278,6 +278,19 @@ function LoginForm() {
     }
   };
 
+  const handleMicrosoftLogin = async (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    setIsLoading(true);
+    try {
+      await signIn("azure-ad", { callbackUrl });
+    } catch (err) {
+      console.error("Microsoft login error:", err);
+      setError("Failed to sign in with Microsoft");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <AuthCard title="Sign In">
       <div className="sm:mx-auto sm:w-full sm:max-w-sm">
@@ -287,6 +300,32 @@ function LoginForm() {
       </div>
 
       <div className="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
+        {/* Microsoft SSO Button */}
+        <div className="mb-6">
+          <Button
+            type="button"
+            variant="secondary"
+            fullWidth
+            onClick={handleMicrosoftLogin}
+            disabled={isLoading}
+          >
+            {isLoading ? "Signing in..." : "Sign in with Microsoft"}
+          </Button>
+          <p className="mt-2 text-sm text-center text-gray-600">
+            Microsoft SSO is only available for IG employees
+          </p>
+        </div>
+
+        {/* Divider */}
+        <div className="relative mb-6">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-gray-300"></div>
+          </div>
+          <div className="relative flex justify-center text-sm">
+            <span className="bg-white px-2 text-gray-500">Or continue with</span>
+          </div>
+        </div>
+
         {isRegistered && (
           <div className="mb-4 rounded-md bg-green-50 p-4">
             <div className="flex">

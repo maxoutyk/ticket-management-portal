@@ -5,7 +5,7 @@ interface ButtonProps {
   variant?: "primary" | "secondary" | "outline";
   disabled?: boolean;
   fullWidth?: boolean;
-  onClick?: () => void;
+  onClick?: (event: React.MouseEvent<HTMLButtonElement>) => void;
   children: React.ReactNode;
   icon?: React.ReactNode;
 }

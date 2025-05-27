@@ -1,12 +1,14 @@
 import { NextAuthOptions } from "next-auth";
 import { compare } from "bcrypt";
 import CredentialsProvider from "next-auth/providers/credentials";
+import AzureADProvider from "next-auth/providers/azure-ad";
 import { prisma } from "@/lib/prisma";
 
 // Extend the built-in types
 declare module "next-auth" {
   interface User {
     requiresTwoFactor?: boolean;
+    role: string;
   }
   
   interface Session {
@@ -23,11 +25,21 @@ declare module "next-auth" {
 declare module "next-auth/jwt" {
   interface JWT {
     requiresTwoFactor?: boolean;
+    role: string;
   }
 }
 
+// IG email domain for SSO
+const IG_EMAIL_DOMAIN = "incitegravity.com"; // Replace with your actual domain
+
 export const authOptions: NextAuthOptions = {
   providers: [
+    AzureADProvider({
+      clientId: process.env.AZURE_AD_CLIENT_ID!,
+      clientSecret: process.env.AZURE_AD_CLIENT_SECRET!,
+      tenantId: process.env.AZURE_AD_TENANT_ID,
+      authorization: { params: { scope: "openid profile email" } },
+    }),
     CredentialsProvider({
       name: "Credentials",
       credentials: {
@@ -181,17 +193,69 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   callbacks: {
-    async jwt({ token, user }) {
+    async signIn({ user, account }) {
+      // Handle Microsoft SSO sign in
+      if (account?.provider === "azure-ad") {
+        try {
+          // Verify email domain for SSO
+          const emailDomain = user.email?.split('@')[1];
+          if (emailDomain !== IG_EMAIL_DOMAIN) {
+            console.log(`SSO attempt from non-IG domain: ${emailDomain}`);
+            throw new Error("Only IG employees can use Microsoft SSO");
+          }
+
+          // Check if user exists
+          const existingUser = await prisma.user.findUnique({
+            where: { email: user.email! },
+          });
+
+          if (!existingUser) {
+            // Create new user for Microsoft SSO
+            await prisma.user.create({
+              data: {
+                email: user.email!,
+                name: user.name!,
+                role: "EMPLOYEE", // Set role as EMPLOYEE for SSO users
+                password: "", // Empty password for SSO users
+                isApproved: true, // Auto-approve SSO users
+                approvedAt: new Date(),
+              },
+            });
+          }
+
+          return true;
+        } catch (error) {
+          console.error("Error in Microsoft SSO sign in:", error);
+          return false;
+        }
+      }
+
+      // For credentials sign in, always return true as the authorize function handles validation
+      return true;
+    },
+    async jwt({ token, user, account }) {
       if (user) {
         token.id = user.id;
         token.email = user.email;
         token.name = user.name;
-        token.role = user.role;
+        token.role = user.role || "EMPLOYEE"; // Default to EMPLOYEE role for SSO
         if ('requiresTwoFactor' in user) {
           token.requiresTwoFactor = user.requiresTwoFactor;
-          console.log('Setting requiresTwoFactor in JWT to:', user.requiresTwoFactor);
         }
       }
+
+      // If it's an OAuth sign in, get or create the user and set their role
+      if (account?.provider === "azure-ad") {
+        const dbUser = await prisma.user.findUnique({
+          where: { email: token.email! },
+          select: { id: true, role: true },
+        });
+        if (dbUser) {
+          token.id = dbUser.id;
+          token.role = dbUser.role;
+        }
+      }
+
       return token;
     },
     async session({ session, token }) {
@@ -200,32 +264,16 @@ export const authOptions: NextAuthOptions = {
         session.user.email = token.email as string;
         session.user.name = token.name as string;
         session.user.role = token.role as string;
-        if ('requiresTwoFactor' in token) {
-          session.user.requiresTwoFactor = token.requiresTwoFactor;
-        }
+        session.user.requiresTwoFactor = token.requiresTwoFactor;
       }
       return session;
     },
-    async signIn({ user }) {
-      // Check if the user is approved
-      if (user.email) {
-        const dbUser = await prisma.user.findUnique({
-          where: { email: user.email },
-          select: { isApproved: true }
-        });
-        
-        if (!dbUser?.isApproved) {
-          throw new Error("Your account is pending approval.");
-        }
-      }
-      return true;
-    }
   },
   pages: {
-    signIn: '/login',
-    error: '/login',
+    signIn: "/login",
+    error: "/login",
   },
   session: {
-    strategy: 'jwt',
+    strategy: "jwt",
   },
 }; 

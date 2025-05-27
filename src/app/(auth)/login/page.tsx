@@ -239,7 +239,7 @@ function LoginForm() {
 
     try {
       // First verify the OTP through the API
-      const verifyResponse = await fetch("/api/auth/otp/verify", {
+      const verifyResponse = await fetch("/api/auth/otp", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -250,9 +250,10 @@ function LoginForm() {
         }),
       });
 
+      const responseData = await verifyResponse.json();
+
       if (!verifyResponse.ok) {
-        const errorData = await verifyResponse.json();
-        throw new Error(errorData.error || "Failed to verify code");
+        throw new Error(responseData.error || "Failed to verify code");
       }
 
       // After OTP is verified, sign in again with the OTP

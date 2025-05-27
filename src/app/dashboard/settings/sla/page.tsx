@@ -4,20 +4,22 @@ import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { 
-  ClockIcon, 
-  PencilIcon, 
-  TrashIcon, 
-  PlusIcon, 
-  FunnelIcon, 
+import {
+  PlusIcon,
+  ClockIcon,
   CalendarIcon,
-  ScaleIcon 
+  ScaleIcon,
+  PencilIcon,
+  TrashIcon,
+  FunnelIcon,
+  ArrowLeftIcon,
+  DocumentChartBarIcon,
 } from "@heroicons/react/24/outline";
 
-type Organization = {
+interface Organization {
   id: string;
   name: string;
-};
+}
 
 type SlaPolicy = {
   id: string;
@@ -47,6 +49,13 @@ type PriorityMultiplier = {
   multiplier: number;
 };
 
+interface PaginationData {
+  total: number;
+  pages: number;
+  currentPage: number;
+  limit: number;
+}
+
 export default function SlaManagementPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
@@ -57,7 +66,13 @@ export default function SlaManagementPage() {
   const [loadingBusinessHours, setLoadingBusinessHours] = useState(true);
   const [loadingMultipliers, setLoadingMultipliers] = useState(true);
   const [organizations, setOrganizations] = useState<Organization[]>([]);
-  const [selectedOrgId, setSelectedOrgId] = useState<string | null>(null);
+  const [selectedOrgId, setSelectedOrgId] = useState<string | "null" | "">("");
+  const [pagination, setPagination] = useState<PaginationData>({
+    total: 0,
+    pages: 0,
+    currentPage: 1,
+    limit: 10
+  });
 
   const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
@@ -89,15 +104,16 @@ export default function SlaManagementPage() {
   useEffect(() => {
     const fetchPolicies = async () => {
       try {
-        let url = "/api/sla/policies";
+        let url = `/api/sla/policies?page=${pagination.currentPage}&limit=${pagination.limit}`;
         if (selectedOrgId) {
-          url += `?organizationId=${selectedOrgId}`;
+          url += `&organizationId=${selectedOrgId}`;
         }
         
         const response = await fetch(url);
         const data = await response.json();
         if (response.ok) {
-          setSlaPolicies(data);
+          setSlaPolicies(data.policies);
+          setPagination(data.pagination);
         } else {
           console.error("Failed to fetch SLA policies");
         }
@@ -109,7 +125,7 @@ export default function SlaManagementPage() {
     };
 
     fetchPolicies();
-  }, [selectedOrgId]);
+  }, [selectedOrgId, pagination.currentPage, pagination.limit]);
 
   useEffect(() => {
     const fetchBusinessHours = async () => {
@@ -173,7 +189,11 @@ export default function SlaManagementPage() {
 
   const handleOrgFilterChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const value = e.target.value;
-    setSelectedOrgId(value === "" ? null : value);
+    setSelectedOrgId(value);
+  };
+
+  const handlePageChange = (newPage: number) => {
+    setPagination(prev => ({ ...prev, currentPage: newPage }));
   };
 
   // Format time for display
@@ -197,13 +217,22 @@ export default function SlaManagementPage() {
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold text-gray-900">SLA Management</h1>
-        <Link 
-          href="/dashboard/settings/sla/new" 
-          className="bg-incite-navy hover:bg-blue-700 text-white py-2 px-4 rounded inline-flex items-center"
-        >
-          <PlusIcon className="h-5 w-5 mr-2" />
-          New SLA Policy
-        </Link>
+        <div className="flex space-x-4">
+          <Link 
+            href="/dashboard/settings/sla/reports" 
+            className="bg-white hover:bg-gray-50 text-gray-700 border border-gray-300 py-2 px-4 rounded inline-flex items-center"
+          >
+            <DocumentChartBarIcon className="h-5 w-5 mr-2" />
+            View Reports
+          </Link>
+          <Link 
+            href="/dashboard/settings/sla/new" 
+            className="bg-incite-navy hover:bg-blue-700 text-white py-2 px-4 rounded inline-flex items-center"
+          >
+            <PlusIcon className="h-5 w-5 mr-2" />
+            New SLA Policy
+          </Link>
+        </div>
       </div>
 
       {/* SLA Policies Section */}
@@ -216,7 +245,7 @@ export default function SlaManagementPage() {
           <div className="flex items-center">
             <FunnelIcon className="h-5 w-5 text-gray-500 mr-2" />
             <select
-              value={selectedOrgId || ""}
+              value={selectedOrgId}
               onChange={handleOrgFilterChange}
               className="rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
             >
@@ -234,89 +263,137 @@ export default function SlaManagementPage() {
             <p>No SLA policies found. Create a new policy to get started.</p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Name
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Organization
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Priority
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Response Time
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Resolution Time
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {slaPolicies.map((policy) => (
-                  <tr key={policy.id}>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">{policy.name}</div>
-                      {policy.description && (
-                        <div className="text-sm text-gray-500">{policy.description}</div>
-                      )}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">
-                        {policy.organization ? policy.organization.name : 'Global Policy'}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                        policy.priorityLevel === "CRITICAL" ? "bg-red-100 text-red-800" :
-                        policy.priorityLevel === "HIGH" ? "bg-orange-100 text-orange-800" :
-                        policy.priorityLevel === "MEDIUM" ? "bg-yellow-100 text-yellow-800" :
-                        "bg-green-100 text-green-800"
-                      }`}>
-                        {policy.priorityLevel}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {policy.responseTimeHours} hours
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {policy.resolutionTimeHours} hours
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                        policy.active ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"
-                      }`}>
-                        {policy.active ? "Active" : "Inactive"}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <Link
-                        href={`/dashboard/settings/sla/${policy.id}`}
-                        className="text-incite-navy hover:text-blue-900 mr-4"
-                      >
-                        <PencilIcon className="h-5 w-5 inline" />
-                      </Link>
-                      <button
-                        onClick={() => handleDeletePolicy(policy.id)}
-                        className="text-red-600 hover:text-red-900"
-                      >
-                        <TrashIcon className="h-5 w-5 inline" />
-                      </button>
-                    </td>
+          <>
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Name
+                    </th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Organization
+                    </th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Priority
+                    </th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Response Time
+                    </th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Resolution Time
+                    </th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Status
+                    </th>
+                    <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Actions
+                    </th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {slaPolicies.map((policy) => (
+                    <tr key={policy.id}>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm font-medium text-gray-900">{policy.name}</div>
+                        {policy.description && (
+                          <div className="text-sm text-gray-500">{policy.description}</div>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900">
+                          {policy.organization ? policy.organization.name : 'Global Policy'}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                          policy.priorityLevel === "CRITICAL" ? "bg-red-100 text-red-800" :
+                          policy.priorityLevel === "HIGH" ? "bg-orange-100 text-orange-800" :
+                          policy.priorityLevel === "MEDIUM" ? "bg-yellow-100 text-yellow-800" :
+                          "bg-green-100 text-green-800"
+                        }`}>
+                          {policy.priorityLevel}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {policy.responseTimeHours} hours
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {policy.resolutionTimeHours} hours
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                          policy.active ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"
+                        }`}>
+                          {policy.active ? "Active" : "Inactive"}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <Link
+                          href={`/dashboard/settings/sla/${policy.id}/edit`}
+                          className="text-incite-navy hover:text-blue-900 mr-4"
+                          title="Edit Policy"
+                        >
+                          <PencilIcon className="h-5 w-5 inline" />
+                          <span className="sr-only">Edit</span>
+                        </Link>
+                        <button
+                          onClick={() => handleDeletePolicy(policy.id)}
+                          className="text-red-600 hover:text-red-900"
+                          title="Delete Policy"
+                        >
+                          <TrashIcon className="h-5 w-5 inline" />
+                          <span className="sr-only">Delete</span>
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            
+            {/* Pagination */}
+            {pagination.pages > 1 && (
+              <div className="px-6 py-4 border-t border-gray-200 bg-gray-50">
+                <div className="flex items-center justify-between">
+                  <div className="text-sm text-gray-700">
+                    Showing {((pagination.currentPage - 1) * pagination.limit) + 1} to{" "}
+                    {Math.min(pagination.currentPage * pagination.limit, pagination.total)} of{" "}
+                    {pagination.total} results
+                  </div>
+                  <div className="flex space-x-2">
+                    <button
+                      onClick={() => handlePageChange(pagination.currentPage - 1)}
+                      disabled={pagination.currentPage === 1}
+                      className="px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Previous
+                    </button>
+                    {Array.from({ length: pagination.pages }, (_, i) => i + 1).map((page) => (
+                      <button
+                        key={page}
+                        onClick={() => handlePageChange(page)}
+                        className={`px-3 py-1 border rounded-md text-sm font-medium ${
+                          page === pagination.currentPage
+                            ? "bg-incite-navy text-white border-incite-navy"
+                            : "border-gray-300 text-gray-700 bg-white hover:bg-gray-50"
+                        }`}
+                      >
+                        {page}
+                      </button>
+                    ))}
+                    <button
+                      onClick={() => handlePageChange(pagination.currentPage + 1)}
+                      disabled={pagination.currentPage === pagination.pages}
+                      className="px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Next
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </>
         )}
       </div>
 

@@ -1,25 +1,20 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { prisma } from "@/lib/prisma";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { authOptions } from "@/lib/auth";
 import { sendEmail, emailTemplates } from "@/lib/email";
 
-interface Params {
-  params: {
-    id: string;
-  };
-}
-
 // GET a single ticket by ID
-export async function GET(request: Request, { params }: Params) {
+export async function GET(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
-    // Await params to satisfy Next.js 15+ requirement
-    const resolvedParams = await Promise.resolve(params);
-    const id = resolvedParams.id;
+    const { id } = await params;
     
     const session = await getServerSession(authOptions);
     
-    if (!session || !session.user) {
+    if (!session?.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
     
@@ -90,15 +85,16 @@ export async function GET(request: Request, { params }: Params) {
 }
 
 // PATCH (update) a ticket
-export async function PATCH(request: Request, { params }: Params) {
+export async function PATCH(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
-    // Await params to satisfy Next.js 15+ requirement
-    const resolvedParams = await Promise.resolve(params);
-    const id = resolvedParams.id;
+    const { id } = await params;
     
     const session = await getServerSession(authOptions);
     
-    if (!session || !session.user) {
+    if (!session?.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
     
@@ -142,7 +138,17 @@ export async function PATCH(request: Request, { params }: Params) {
     // Prepare update data
     const updateData: any = {};
     
-    if (status) updateData.status = status;
+    if (status) {
+      updateData.status = status;
+      // Set resolvedAt when status changes to RESOLVED or CLOSED
+      if ((status === "RESOLVED" || status === "CLOSED") && !ticket.resolvedAt) {
+        updateData.resolvedAt = new Date();
+      }
+      // Clear resolvedAt if status changes back to OPEN or IN_PROGRESS
+      if ((status === "OPEN" || status === "IN_PROGRESS") && ticket.resolvedAt) {
+        updateData.resolvedAt = null;
+      }
+    }
     if (priority) updateData.priority = priority;
     if (assigneeId) updateData.assigneeId = assigneeId;
     
@@ -151,22 +157,15 @@ export async function PATCH(request: Request, { params }: Params) {
       where: { id },
       data: updateData,
       include: {
-        createdBy: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            role: true,
-          },
+        assignedTo: true,
+        createdBy: true,
+        comments: {
+          include: {
+            user: true,
+            attachments: true,
+          }
         },
-        assignedTo: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            role: true,
-          },
-        },
+        attachments: true,
       },
     });
     

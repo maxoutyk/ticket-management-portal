@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { prisma } from "@/lib/prisma";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { authOptions } from "@/lib/auth";
 import { sendEmail, emailTemplates } from "@/lib/email";
 import { generateTicketNumber } from "@/lib/ticketUtils";
 import { initializeTicketSla } from "@/lib/sla";

@@ -13,6 +13,7 @@ interface FormInputProps {
   icon?: React.ReactNode;
   autoComplete?: string;
   inputMode?: "none" | "text" | "tel" | "url" | "email" | "numeric" | "decimal" | "search";
+  maxLength?: number;
 }
 
 export function FormInput({
@@ -28,6 +29,7 @@ export function FormInput({
   icon,
   autoComplete,
   inputMode,
+  maxLength,
 }: FormInputProps) {
   return (
     <div className="mb-5">
@@ -50,6 +52,7 @@ export function FormInput({
           onChange={onChange}
           autoComplete={autoComplete}
           inputMode={inputMode}
+          maxLength={maxLength}
           className={`${
             icon ? "pl-10" : "pl-4"
           } block w-full py-2.5 pr-4 border ${

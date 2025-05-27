@@ -2,17 +2,17 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { hash } from "bcrypt";
 import { prisma } from "@/lib/prisma";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { authOptions } from "@/lib/auth";
 
 // GET user by ID (admin only)
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
     
-    if (!session || !session.user) {
+    if (!session?.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
     
@@ -24,9 +24,7 @@ export async function GET(
       return NextResponse.json({ error: "Not authorized to view user details" }, { status: 403 });
     }
     
-    // Await params to satisfy Next.js 15+ requirement
-    const resolvedParams = await Promise.resolve(params);
-    const userId = resolvedParams.id;
+    const { id: userId } = await params;
     
     const user = await prisma.user.findUnique({
       where: { id: userId },
@@ -89,12 +87,12 @@ export async function GET(
 // PATCH - Update user
 export async function PATCH(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
     
-    if (!session || !session.user) {
+    if (!session?.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
     
@@ -106,9 +104,7 @@ export async function PATCH(
       return NextResponse.json({ error: "Not authorized to update users" }, { status: 403 });
     }
     
-    // Await params to satisfy Next.js 15+ requirement
-    const resolvedParams = await Promise.resolve(params);
-    const userId = resolvedParams.id;
+    const { id: userId } = await params;
     const body = await request.json();
     
     const { 
@@ -201,35 +197,34 @@ export async function PATCH(
             organizationId = newOrg.id;
           }
           
+          // Update user's organization ID
           userData.organizationId = organizationId;
           
-          // Handle contact persons
-          if (contactPersons && contactPersons.length > 0) {
-            // If organization exists, delete current contact persons and add new ones
+          // Handle contact persons if provided
+          if (contactPersons && Array.isArray(contactPersons)) {
+            // Delete existing contact persons
             if (existingUser.organizationId) {
               await tx.contactPerson.deleteMany({
                 where: { organizationId: existingUser.organizationId }
               });
             }
             
-            // Add new contact persons
+            // Create new contact persons
             await tx.contactPerson.createMany({
-              data: contactPersons.map((contact: any) => ({
-                name: contact.name,
-                email: contact.email,
-                phoneNumber: contact.phoneNumber,
-                organizationId: organizationId as string
+              data: contactPersons.map(contact => ({
+                ...contact,
+                organizationId: organizationId
               }))
             });
           }
-        } else if (role && role !== "USER" && existingUser.role === "USER") {
-          // If changing from USER to non-USER role, remove organization association
-          userData.organizationId = null;
         }
+      } else {
+        // If role is not USER, remove organization association
+        userData.organizationId = null;
       }
       
       // Update the user
-      const user = await tx.user.update({
+      return tx.user.update({
         where: { id: userId },
         data: userData,
         select: {
@@ -238,6 +233,7 @@ export async function PATCH(
           email: true,
           role: true,
           createdAt: true,
+          twoFactorEnabled: true,
           organization: {
             select: {
               id: true,
@@ -255,8 +251,6 @@ export async function PATCH(
           }
         }
       });
-      
-      return user;
     });
     
     return NextResponse.json(updatedUser);
@@ -272,12 +266,12 @@ export async function PATCH(
 // DELETE - Delete user
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
     
-    if (!session || !session.user) {
+    if (!session?.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
     
@@ -289,15 +283,17 @@ export async function DELETE(
       return NextResponse.json({ error: "Not authorized to delete users" }, { status: 403 });
     }
     
-    // Await params to satisfy Next.js 15+ requirement
-    const resolvedParams = await Promise.resolve(params);
-    const userId = resolvedParams.id;
+    const { id: userId } = await params;
     
     // Check if user exists
     const existingUser = await prisma.user.findUnique({
       where: { id: userId },
       include: {
-        organization: true
+        organization: {
+          include: {
+            users: true
+          }
+        }
       }
     });
     
@@ -305,39 +301,22 @@ export async function DELETE(
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
     
-    // Don't allow deleting admin users
-    if (existingUser.role === "ADMIN") {
-      return NextResponse.json(
-        { error: "Cannot delete users with ADMIN role" },
-        { status: 403 }
-      );
-    }
-    
-    // Perform delete in a transaction
+    // Delete user and handle related data in a transaction
     await prisma.$transaction(async (tx) => {
-      // Delete user
+      // If this is the last user of an organization, delete the organization
+      if (existingUser.organization && existingUser.organization.users.length === 1) {
+        await tx.organization.delete({
+          where: { id: existingUser.organization.id }
+        });
+      }
+      
+      // Delete the user
       await tx.user.delete({
         where: { id: userId }
       });
-      
-      // If user has an organization and they're the only user in it, delete the organization too
-      if (existingUser.organizationId) {
-        const usersInOrg = await tx.user.count({
-          where: { organizationId: existingUser.organizationId }
-        });
-        
-        if (usersInOrg === 0) {
-          await tx.organization.delete({
-            where: { id: existingUser.organizationId }
-          });
-        }
-      }
     });
     
-    return NextResponse.json(
-      { message: "User deleted successfully" },
-      { status: 200 }
-    );
+    return NextResponse.json({ message: "User deleted successfully" });
   } catch (error) {
     console.error("Error deleting user:", error);
     return NextResponse.json(

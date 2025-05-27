@@ -205,7 +205,7 @@ export default function PriorityMultipliersPage() {
                         onChange={(e) => handleMultiplierChange(index, parseFloat(e.target.value))}
                         min="0.1"
                         max="10"
-                        step="0.1"
+                        step="0.05"
                         className="rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm w-24"
                       />
                       <span className="ml-2 text-gray-500">×</span>

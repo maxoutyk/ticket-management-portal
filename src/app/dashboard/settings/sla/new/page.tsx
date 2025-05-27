@@ -6,10 +6,10 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeftIcon } from "@heroicons/react/24/outline";
 
-type Organization = {
+interface Organization {
   id: string;
   name: string;
-};
+}
 
 type SlaPolicy = {
   name: string;
@@ -135,12 +135,12 @@ export default function NewSlaPolicyPage() {
         </Link>
       </div>
 
-      <div className="bg-white shadow rounded-lg overflow-hidden">
+      <div className="bg-white shadow-sm rounded-lg border border-gray-200 overflow-hidden">
         <div className="p-4 border-b border-gray-200 bg-gray-50">
           <h2 className="text-lg font-medium text-gray-900">Create New SLA Policy</h2>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6">
+        <form onSubmit={handleSubmit} className="p-6 space-y-6">
           {error && (
             <div className="mb-4 bg-red-50 border-l-4 border-red-500 p-4 rounded">
               <p className="text-red-700 text-sm">{error}</p>
@@ -149,7 +149,7 @@ export default function NewSlaPolicyPage() {
 
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
             <div className="col-span-2">
-              <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
                 Policy Name <span className="text-red-500">*</span>
               </label>
               <input
@@ -159,13 +159,13 @@ export default function NewSlaPolicyPage() {
                 value={formData.name}
                 onChange={handleChange}
                 required
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-1 focus:ring-incite-navy focus:border-incite-navy"
                 placeholder="e.g., Standard SLA Policy"
               />
             </div>
 
             <div className="col-span-2">
-              <label htmlFor="description" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
                 Description
               </label>
               <textarea
@@ -174,13 +174,13 @@ export default function NewSlaPolicyPage() {
                 value={formData.description}
                 onChange={handleChange}
                 rows={3}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-1 focus:ring-incite-navy focus:border-incite-navy"
                 placeholder="Describe the purpose of this SLA policy"
-              ></textarea>
+              />
             </div>
 
             <div>
-              <label htmlFor="organizationId" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="organizationId" className="block text-sm font-medium text-gray-700 mb-1">
                 Organization
               </label>
               <select
@@ -188,7 +188,7 @@ export default function NewSlaPolicyPage() {
                 name="organizationId"
                 value={formData.organizationId || ""}
                 onChange={handleChange}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-1 focus:ring-incite-navy focus:border-incite-navy"
                 disabled={loadingOrgs}
               >
                 <option value="">Global Policy (All Organizations)</option>
@@ -204,7 +204,7 @@ export default function NewSlaPolicyPage() {
             </div>
 
             <div>
-              <label htmlFor="priorityLevel" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="priorityLevel" className="block text-sm font-medium text-gray-700 mb-1">
                 Priority Level <span className="text-red-500">*</span>
               </label>
               <select
@@ -213,7 +213,7 @@ export default function NewSlaPolicyPage() {
                 value={formData.priorityLevel}
                 onChange={handleChange}
                 required
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-1 focus:ring-incite-navy focus:border-incite-navy"
               >
                 <option value="LOW">Low</option>
                 <option value="MEDIUM">Medium</option>
@@ -223,22 +223,7 @@ export default function NewSlaPolicyPage() {
             </div>
 
             <div>
-              <label htmlFor="active" className="flex items-center text-sm font-medium text-gray-700">
-                <input
-                  type="checkbox"
-                  id="active"
-                  name="active"
-                  checked={formData.active}
-                  onChange={(e) => setFormData({ ...formData, active: e.target.checked })}
-                  className="h-4 w-4 rounded border-gray-300 text-incite-navy focus:ring-indigo-500 mr-2"
-                />
-                Active
-              </label>
-              <p className="mt-1 text-sm text-gray-500">Enable or disable this SLA policy</p>
-            </div>
-
-            <div>
-              <label htmlFor="responseTimeHours" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="responseTimeHours" className="block text-sm font-medium text-gray-700 mb-1">
                 Response Time (hours) <span className="text-red-500">*</span>
               </label>
               <input
@@ -250,7 +235,7 @@ export default function NewSlaPolicyPage() {
                 min="0"
                 step="0.5"
                 required
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-1 focus:ring-incite-navy focus:border-incite-navy"
               />
               <p className="mt-1 text-sm text-gray-500">
                 Time allowed for first response to the ticket
@@ -258,7 +243,7 @@ export default function NewSlaPolicyPage() {
             </div>
 
             <div>
-              <label htmlFor="resolutionTimeHours" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="resolutionTimeHours" className="block text-sm font-medium text-gray-700 mb-1">
                 Resolution Time (hours) <span className="text-red-500">*</span>
               </label>
               <input
@@ -270,25 +255,40 @@ export default function NewSlaPolicyPage() {
                 min="0"
                 step="0.5"
                 required
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-1 focus:ring-incite-navy focus:border-incite-navy"
               />
               <p className="mt-1 text-sm text-gray-500">
                 Time allowed for resolving the ticket
               </p>
             </div>
+
+            <div>
+              <label htmlFor="active" className="flex items-center text-sm font-medium text-gray-700">
+                <input
+                  type="checkbox"
+                  id="active"
+                  name="active"
+                  checked={formData.active}
+                  onChange={handleChange}
+                  className="h-4 w-4 rounded border-gray-300 text-incite-navy focus:ring-1 focus:ring-incite-navy mr-2"
+                />
+                Active
+              </label>
+              <p className="mt-1 text-sm text-gray-500">Enable or disable this SLA policy</p>
+            </div>
           </div>
 
-          <div className="mt-6 flex items-center justify-end space-x-3">
+          <div className="flex items-center justify-end space-x-3 pt-6">
             <Link
               href="/dashboard/settings/sla"
-              className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-incite-navy"
             >
               Cancel
             </Link>
             <button
               type="submit"
               disabled={isSubmitting}
-              className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-incite-navy hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
+              className="px-4 py-2 bg-incite-navy text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-incite-navy disabled:opacity-50"
             >
               {isSubmitting ? "Creating..." : "Create Policy"}
             </button>

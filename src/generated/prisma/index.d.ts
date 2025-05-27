@@ -407,8 +407,8 @@ export namespace Prisma {
   export import Exact = $Public.Exact
 
   /**
-   * Prisma Client JS version: 6.7.0
-   * Query Engine version: 3cff47a7f5d65c3ea74883f1d736e41d68ce91ed
+   * Prisma Client JS version: 6.8.2
+   * Query Engine version: 2060c79ba17c6bb9f5823312b6f6b7f4a845738e
    */
   export type PrismaVersion = {
     client: string
@@ -1825,12 +1825,14 @@ export namespace Prisma {
    */
 
   export type UserCountOutputType = {
+    approvedUsers: number
     comments: number
     assignedTickets: number
     tickets: number
   }
 
   export type UserCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    approvedUsers?: boolean | UserCountOutputTypeCountApprovedUsersArgs
     comments?: boolean | UserCountOutputTypeCountCommentsArgs
     assignedTickets?: boolean | UserCountOutputTypeCountAssignedTicketsArgs
     tickets?: boolean | UserCountOutputTypeCountTicketsArgs
@@ -1845,6 +1847,13 @@ export namespace Prisma {
      * Select specific fields to fetch from the UserCountOutputType
      */
     select?: UserCountOutputTypeSelect<ExtArgs> | null
+  }
+
+  /**
+   * UserCountOutputType without action
+   */
+  export type UserCountOutputTypeCountApprovedUsersArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: UserWhereInput
   }
 
   /**
@@ -2047,6 +2056,9 @@ export namespace Prisma {
     otpExpiry: Date | null
     otpVerifiedAt: Date | null
     twoFactorEnabled: boolean | null
+    isApproved: boolean | null
+    approvedAt: Date | null
+    approvedBy: string | null
   }
 
   export type UserMaxAggregateOutputType = {
@@ -2062,6 +2074,9 @@ export namespace Prisma {
     otpExpiry: Date | null
     otpVerifiedAt: Date | null
     twoFactorEnabled: boolean | null
+    isApproved: boolean | null
+    approvedAt: Date | null
+    approvedBy: string | null
   }
 
   export type UserCountAggregateOutputType = {
@@ -2077,6 +2092,9 @@ export namespace Prisma {
     otpExpiry: number
     otpVerifiedAt: number
     twoFactorEnabled: number
+    isApproved: number
+    approvedAt: number
+    approvedBy: number
     _all: number
   }
 
@@ -2094,6 +2112,9 @@ export namespace Prisma {
     otpExpiry?: true
     otpVerifiedAt?: true
     twoFactorEnabled?: true
+    isApproved?: true
+    approvedAt?: true
+    approvedBy?: true
   }
 
   export type UserMaxAggregateInputType = {
@@ -2109,6 +2130,9 @@ export namespace Prisma {
     otpExpiry?: true
     otpVerifiedAt?: true
     twoFactorEnabled?: true
+    isApproved?: true
+    approvedAt?: true
+    approvedBy?: true
   }
 
   export type UserCountAggregateInputType = {
@@ -2124,6 +2148,9 @@ export namespace Prisma {
     otpExpiry?: true
     otpVerifiedAt?: true
     twoFactorEnabled?: true
+    isApproved?: true
+    approvedAt?: true
+    approvedBy?: true
     _all?: true
   }
 
@@ -2212,6 +2239,9 @@ export namespace Prisma {
     otpExpiry: Date | null
     otpVerifiedAt: Date | null
     twoFactorEnabled: boolean
+    isApproved: boolean
+    approvedAt: Date | null
+    approvedBy: string | null
     _count: UserCountAggregateOutputType | null
     _min: UserMinAggregateOutputType | null
     _max: UserMaxAggregateOutputType | null
@@ -2244,6 +2274,11 @@ export namespace Prisma {
     otpExpiry?: boolean
     otpVerifiedAt?: boolean
     twoFactorEnabled?: boolean
+    isApproved?: boolean
+    approvedAt?: boolean
+    approvedBy?: boolean
+    approvedByUser?: boolean | User$approvedByUserArgs<ExtArgs>
+    approvedUsers?: boolean | User$approvedUsersArgs<ExtArgs>
     comments?: boolean | User$commentsArgs<ExtArgs>
     assignedTickets?: boolean | User$assignedTicketsArgs<ExtArgs>
     tickets?: boolean | User$ticketsArgs<ExtArgs>
@@ -2264,6 +2299,10 @@ export namespace Prisma {
     otpExpiry?: boolean
     otpVerifiedAt?: boolean
     twoFactorEnabled?: boolean
+    isApproved?: boolean
+    approvedAt?: boolean
+    approvedBy?: boolean
+    approvedByUser?: boolean | User$approvedByUserArgs<ExtArgs>
     organization?: boolean | User$organizationArgs<ExtArgs>
   }, ExtArgs["result"]["user"]>
 
@@ -2280,6 +2319,10 @@ export namespace Prisma {
     otpExpiry?: boolean
     otpVerifiedAt?: boolean
     twoFactorEnabled?: boolean
+    isApproved?: boolean
+    approvedAt?: boolean
+    approvedBy?: boolean
+    approvedByUser?: boolean | User$approvedByUserArgs<ExtArgs>
     organization?: boolean | User$organizationArgs<ExtArgs>
   }, ExtArgs["result"]["user"]>
 
@@ -2296,10 +2339,15 @@ export namespace Prisma {
     otpExpiry?: boolean
     otpVerifiedAt?: boolean
     twoFactorEnabled?: boolean
+    isApproved?: boolean
+    approvedAt?: boolean
+    approvedBy?: boolean
   }
 
-  export type UserOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "name" | "email" | "password" | "role" | "createdAt" | "updatedAt" | "organizationId" | "otp" | "otpExpiry" | "otpVerifiedAt" | "twoFactorEnabled", ExtArgs["result"]["user"]>
+  export type UserOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "name" | "email" | "password" | "role" | "createdAt" | "updatedAt" | "organizationId" | "otp" | "otpExpiry" | "otpVerifiedAt" | "twoFactorEnabled" | "isApproved" | "approvedAt" | "approvedBy", ExtArgs["result"]["user"]>
   export type UserInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    approvedByUser?: boolean | User$approvedByUserArgs<ExtArgs>
+    approvedUsers?: boolean | User$approvedUsersArgs<ExtArgs>
     comments?: boolean | User$commentsArgs<ExtArgs>
     assignedTickets?: boolean | User$assignedTicketsArgs<ExtArgs>
     tickets?: boolean | User$ticketsArgs<ExtArgs>
@@ -2307,15 +2355,19 @@ export namespace Prisma {
     _count?: boolean | UserCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type UserIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    approvedByUser?: boolean | User$approvedByUserArgs<ExtArgs>
     organization?: boolean | User$organizationArgs<ExtArgs>
   }
   export type UserIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    approvedByUser?: boolean | User$approvedByUserArgs<ExtArgs>
     organization?: boolean | User$organizationArgs<ExtArgs>
   }
 
   export type $UserPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     name: "User"
     objects: {
+      approvedByUser: Prisma.$UserPayload<ExtArgs> | null
+      approvedUsers: Prisma.$UserPayload<ExtArgs>[]
       comments: Prisma.$CommentPayload<ExtArgs>[]
       assignedTickets: Prisma.$TicketPayload<ExtArgs>[]
       tickets: Prisma.$TicketPayload<ExtArgs>[]
@@ -2334,6 +2386,9 @@ export namespace Prisma {
       otpExpiry: Date | null
       otpVerifiedAt: Date | null
       twoFactorEnabled: boolean
+      isApproved: boolean
+      approvedAt: Date | null
+      approvedBy: string | null
     }, ExtArgs["result"]["user"]>
     composites: {}
   }
@@ -2728,6 +2783,8 @@ export namespace Prisma {
    */
   export interface Prisma__UserClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise"
+    approvedByUser<T extends User$approvedByUserArgs<ExtArgs> = {}>(args?: Subset<T, User$approvedByUserArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+    approvedUsers<T extends User$approvedUsersArgs<ExtArgs> = {}>(args?: Subset<T, User$approvedUsersArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     comments<T extends User$commentsArgs<ExtArgs> = {}>(args?: Subset<T, User$commentsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CommentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     assignedTickets<T extends User$assignedTicketsArgs<ExtArgs> = {}>(args?: Subset<T, User$assignedTicketsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TicketPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     tickets<T extends User$ticketsArgs<ExtArgs> = {}>(args?: Subset<T, User$ticketsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TicketPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
@@ -2773,6 +2830,9 @@ export namespace Prisma {
     readonly otpExpiry: FieldRef<"User", 'DateTime'>
     readonly otpVerifiedAt: FieldRef<"User", 'DateTime'>
     readonly twoFactorEnabled: FieldRef<"User", 'Boolean'>
+    readonly isApproved: FieldRef<"User", 'Boolean'>
+    readonly approvedAt: FieldRef<"User", 'DateTime'>
+    readonly approvedBy: FieldRef<"User", 'String'>
   }
     
 
@@ -3166,6 +3226,49 @@ export namespace Prisma {
      * Limit how many Users to delete.
      */
     limit?: number
+  }
+
+  /**
+   * User.approvedByUser
+   */
+  export type User$approvedByUserArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the User
+     */
+    select?: UserSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the User
+     */
+    omit?: UserOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserInclude<ExtArgs> | null
+    where?: UserWhereInput
+  }
+
+  /**
+   * User.approvedUsers
+   */
+  export type User$approvedUsersArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the User
+     */
+    select?: UserSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the User
+     */
+    omit?: UserOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserInclude<ExtArgs> | null
+    where?: UserWhereInput
+    orderBy?: UserOrderByWithRelationInput | UserOrderByWithRelationInput[]
+    cursor?: UserWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: UserScalarFieldEnum | UserScalarFieldEnum[]
   }
 
   /**
@@ -14473,7 +14576,10 @@ export namespace Prisma {
     otp: 'otp',
     otpExpiry: 'otpExpiry',
     otpVerifiedAt: 'otpVerifiedAt',
-    twoFactorEnabled: 'twoFactorEnabled'
+    twoFactorEnabled: 'twoFactorEnabled',
+    isApproved: 'isApproved',
+    approvedAt: 'approvedAt',
+    approvedBy: 'approvedBy'
   };
 
   export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum]
@@ -14768,6 +14874,11 @@ export namespace Prisma {
     otpExpiry?: DateTimeNullableFilter<"User"> | Date | string | null
     otpVerifiedAt?: DateTimeNullableFilter<"User"> | Date | string | null
     twoFactorEnabled?: BoolFilter<"User"> | boolean
+    isApproved?: BoolFilter<"User"> | boolean
+    approvedAt?: DateTimeNullableFilter<"User"> | Date | string | null
+    approvedBy?: StringNullableFilter<"User"> | string | null
+    approvedByUser?: XOR<UserNullableScalarRelationFilter, UserWhereInput> | null
+    approvedUsers?: UserListRelationFilter
     comments?: CommentListRelationFilter
     assignedTickets?: TicketListRelationFilter
     tickets?: TicketListRelationFilter
@@ -14787,6 +14898,11 @@ export namespace Prisma {
     otpExpiry?: SortOrderInput | SortOrder
     otpVerifiedAt?: SortOrderInput | SortOrder
     twoFactorEnabled?: SortOrder
+    isApproved?: SortOrder
+    approvedAt?: SortOrderInput | SortOrder
+    approvedBy?: SortOrderInput | SortOrder
+    approvedByUser?: UserOrderByWithRelationInput
+    approvedUsers?: UserOrderByRelationAggregateInput
     comments?: CommentOrderByRelationAggregateInput
     assignedTickets?: TicketOrderByRelationAggregateInput
     tickets?: TicketOrderByRelationAggregateInput
@@ -14809,6 +14925,11 @@ export namespace Prisma {
     otpExpiry?: DateTimeNullableFilter<"User"> | Date | string | null
     otpVerifiedAt?: DateTimeNullableFilter<"User"> | Date | string | null
     twoFactorEnabled?: BoolFilter<"User"> | boolean
+    isApproved?: BoolFilter<"User"> | boolean
+    approvedAt?: DateTimeNullableFilter<"User"> | Date | string | null
+    approvedBy?: StringNullableFilter<"User"> | string | null
+    approvedByUser?: XOR<UserNullableScalarRelationFilter, UserWhereInput> | null
+    approvedUsers?: UserListRelationFilter
     comments?: CommentListRelationFilter
     assignedTickets?: TicketListRelationFilter
     tickets?: TicketListRelationFilter
@@ -14828,6 +14949,9 @@ export namespace Prisma {
     otpExpiry?: SortOrderInput | SortOrder
     otpVerifiedAt?: SortOrderInput | SortOrder
     twoFactorEnabled?: SortOrder
+    isApproved?: SortOrder
+    approvedAt?: SortOrderInput | SortOrder
+    approvedBy?: SortOrderInput | SortOrder
     _count?: UserCountOrderByAggregateInput
     _max?: UserMaxOrderByAggregateInput
     _min?: UserMinOrderByAggregateInput
@@ -14849,6 +14973,9 @@ export namespace Prisma {
     otpExpiry?: DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
     otpVerifiedAt?: DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
     twoFactorEnabled?: BoolWithAggregatesFilter<"User"> | boolean
+    isApproved?: BoolWithAggregatesFilter<"User"> | boolean
+    approvedAt?: DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
+    approvedBy?: StringNullableWithAggregatesFilter<"User"> | string | null
   }
 
   export type OrganizationWhereInput = {
@@ -15571,6 +15698,10 @@ export namespace Prisma {
     otpExpiry?: Date | string | null
     otpVerifiedAt?: Date | string | null
     twoFactorEnabled?: boolean
+    isApproved?: boolean
+    approvedAt?: Date | string | null
+    approvedByUser?: UserCreateNestedOneWithoutApprovedUsersInput
+    approvedUsers?: UserCreateNestedManyWithoutApprovedByUserInput
     comments?: CommentCreateNestedManyWithoutUserInput
     assignedTickets?: TicketCreateNestedManyWithoutAssignedToInput
     tickets?: TicketCreateNestedManyWithoutCreatedByInput
@@ -15590,6 +15721,10 @@ export namespace Prisma {
     otpExpiry?: Date | string | null
     otpVerifiedAt?: Date | string | null
     twoFactorEnabled?: boolean
+    isApproved?: boolean
+    approvedAt?: Date | string | null
+    approvedBy?: string | null
+    approvedUsers?: UserUncheckedCreateNestedManyWithoutApprovedByUserInput
     comments?: CommentUncheckedCreateNestedManyWithoutUserInput
     assignedTickets?: TicketUncheckedCreateNestedManyWithoutAssignedToInput
     tickets?: TicketUncheckedCreateNestedManyWithoutCreatedByInput
@@ -15607,6 +15742,10 @@ export namespace Prisma {
     otpExpiry?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     otpVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     twoFactorEnabled?: BoolFieldUpdateOperationsInput | boolean
+    isApproved?: BoolFieldUpdateOperationsInput | boolean
+    approvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    approvedByUser?: UserUpdateOneWithoutApprovedUsersNestedInput
+    approvedUsers?: UserUpdateManyWithoutApprovedByUserNestedInput
     comments?: CommentUpdateManyWithoutUserNestedInput
     assignedTickets?: TicketUpdateManyWithoutAssignedToNestedInput
     tickets?: TicketUpdateManyWithoutCreatedByNestedInput
@@ -15626,6 +15765,10 @@ export namespace Prisma {
     otpExpiry?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     otpVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     twoFactorEnabled?: BoolFieldUpdateOperationsInput | boolean
+    isApproved?: BoolFieldUpdateOperationsInput | boolean
+    approvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    approvedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    approvedUsers?: UserUncheckedUpdateManyWithoutApprovedByUserNestedInput
     comments?: CommentUncheckedUpdateManyWithoutUserNestedInput
     assignedTickets?: TicketUncheckedUpdateManyWithoutAssignedToNestedInput
     tickets?: TicketUncheckedUpdateManyWithoutCreatedByNestedInput
@@ -15644,6 +15787,9 @@ export namespace Prisma {
     otpExpiry?: Date | string | null
     otpVerifiedAt?: Date | string | null
     twoFactorEnabled?: boolean
+    isApproved?: boolean
+    approvedAt?: Date | string | null
+    approvedBy?: string | null
   }
 
   export type UserUpdateManyMutationInput = {
@@ -15658,6 +15804,8 @@ export namespace Prisma {
     otpExpiry?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     otpVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     twoFactorEnabled?: BoolFieldUpdateOperationsInput | boolean
+    isApproved?: BoolFieldUpdateOperationsInput | boolean
+    approvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   }
 
   export type UserUncheckedUpdateManyInput = {
@@ -15673,6 +15821,9 @@ export namespace Prisma {
     otpExpiry?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     otpVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     twoFactorEnabled?: BoolFieldUpdateOperationsInput | boolean
+    isApproved?: BoolFieldUpdateOperationsInput | boolean
+    approvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    approvedBy?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type OrganizationCreateInput = {
@@ -16500,6 +16651,17 @@ export namespace Prisma {
     not?: NestedBoolFilter<$PrismaModel> | boolean
   }
 
+  export type UserNullableScalarRelationFilter = {
+    is?: UserWhereInput | null
+    isNot?: UserWhereInput | null
+  }
+
+  export type UserListRelationFilter = {
+    every?: UserWhereInput
+    some?: UserWhereInput
+    none?: UserWhereInput
+  }
+
   export type CommentListRelationFilter = {
     every?: CommentWhereInput
     some?: CommentWhereInput
@@ -16520,6 +16682,10 @@ export namespace Prisma {
   export type SortOrderInput = {
     sort: SortOrder
     nulls?: NullsOrder
+  }
+
+  export type UserOrderByRelationAggregateInput = {
+    _count?: SortOrder
   }
 
   export type CommentOrderByRelationAggregateInput = {
@@ -16543,6 +16709,9 @@ export namespace Prisma {
     otpExpiry?: SortOrder
     otpVerifiedAt?: SortOrder
     twoFactorEnabled?: SortOrder
+    isApproved?: SortOrder
+    approvedAt?: SortOrder
+    approvedBy?: SortOrder
   }
 
   export type UserMaxOrderByAggregateInput = {
@@ -16558,6 +16727,9 @@ export namespace Prisma {
     otpExpiry?: SortOrder
     otpVerifiedAt?: SortOrder
     twoFactorEnabled?: SortOrder
+    isApproved?: SortOrder
+    approvedAt?: SortOrder
+    approvedBy?: SortOrder
   }
 
   export type UserMinOrderByAggregateInput = {
@@ -16573,6 +16745,9 @@ export namespace Prisma {
     otpExpiry?: SortOrder
     otpVerifiedAt?: SortOrder
     twoFactorEnabled?: SortOrder
+    isApproved?: SortOrder
+    approvedAt?: SortOrder
+    approvedBy?: SortOrder
   }
 
   export type StringWithAggregatesFilter<$PrismaModel = never> = {
@@ -16663,12 +16838,6 @@ export namespace Prisma {
     none?: ContactPersonWhereInput
   }
 
-  export type UserListRelationFilter = {
-    every?: UserWhereInput
-    some?: UserWhereInput
-    none?: UserWhereInput
-  }
-
   export type SlaPolicyListRelationFilter = {
     every?: SlaPolicyWhereInput
     some?: SlaPolicyWhereInput
@@ -16676,10 +16845,6 @@ export namespace Prisma {
   }
 
   export type ContactPersonOrderByRelationAggregateInput = {
-    _count?: SortOrder
-  }
-
-  export type UserOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
 
@@ -16764,11 +16929,6 @@ export namespace Prisma {
     every?: DocumentWhereInput
     some?: DocumentWhereInput
     none?: DocumentWhereInput
-  }
-
-  export type UserNullableScalarRelationFilter = {
-    is?: UserWhereInput | null
-    isNot?: UserWhereInput | null
   }
 
   export type UserScalarRelationFilter = {
@@ -17188,6 +17348,19 @@ export namespace Prisma {
     endMinute?: SortOrder
   }
 
+  export type UserCreateNestedOneWithoutApprovedUsersInput = {
+    create?: XOR<UserCreateWithoutApprovedUsersInput, UserUncheckedCreateWithoutApprovedUsersInput>
+    connectOrCreate?: UserCreateOrConnectWithoutApprovedUsersInput
+    connect?: UserWhereUniqueInput
+  }
+
+  export type UserCreateNestedManyWithoutApprovedByUserInput = {
+    create?: XOR<UserCreateWithoutApprovedByUserInput, UserUncheckedCreateWithoutApprovedByUserInput> | UserCreateWithoutApprovedByUserInput[] | UserUncheckedCreateWithoutApprovedByUserInput[]
+    connectOrCreate?: UserCreateOrConnectWithoutApprovedByUserInput | UserCreateOrConnectWithoutApprovedByUserInput[]
+    createMany?: UserCreateManyApprovedByUserInputEnvelope
+    connect?: UserWhereUniqueInput | UserWhereUniqueInput[]
+  }
+
   export type CommentCreateNestedManyWithoutUserInput = {
     create?: XOR<CommentCreateWithoutUserInput, CommentUncheckedCreateWithoutUserInput> | CommentCreateWithoutUserInput[] | CommentUncheckedCreateWithoutUserInput[]
     connectOrCreate?: CommentCreateOrConnectWithoutUserInput | CommentCreateOrConnectWithoutUserInput[]
@@ -17213,6 +17386,13 @@ export namespace Prisma {
     create?: XOR<OrganizationCreateWithoutUsersInput, OrganizationUncheckedCreateWithoutUsersInput>
     connectOrCreate?: OrganizationCreateOrConnectWithoutUsersInput
     connect?: OrganizationWhereUniqueInput
+  }
+
+  export type UserUncheckedCreateNestedManyWithoutApprovedByUserInput = {
+    create?: XOR<UserCreateWithoutApprovedByUserInput, UserUncheckedCreateWithoutApprovedByUserInput> | UserCreateWithoutApprovedByUserInput[] | UserUncheckedCreateWithoutApprovedByUserInput[]
+    connectOrCreate?: UserCreateOrConnectWithoutApprovedByUserInput | UserCreateOrConnectWithoutApprovedByUserInput[]
+    createMany?: UserCreateManyApprovedByUserInputEnvelope
+    connect?: UserWhereUniqueInput | UserWhereUniqueInput[]
   }
 
   export type CommentUncheckedCreateNestedManyWithoutUserInput = {
@@ -17258,6 +17438,30 @@ export namespace Prisma {
 
   export type BoolFieldUpdateOperationsInput = {
     set?: boolean
+  }
+
+  export type UserUpdateOneWithoutApprovedUsersNestedInput = {
+    create?: XOR<UserCreateWithoutApprovedUsersInput, UserUncheckedCreateWithoutApprovedUsersInput>
+    connectOrCreate?: UserCreateOrConnectWithoutApprovedUsersInput
+    upsert?: UserUpsertWithoutApprovedUsersInput
+    disconnect?: UserWhereInput | boolean
+    delete?: UserWhereInput | boolean
+    connect?: UserWhereUniqueInput
+    update?: XOR<XOR<UserUpdateToOneWithWhereWithoutApprovedUsersInput, UserUpdateWithoutApprovedUsersInput>, UserUncheckedUpdateWithoutApprovedUsersInput>
+  }
+
+  export type UserUpdateManyWithoutApprovedByUserNestedInput = {
+    create?: XOR<UserCreateWithoutApprovedByUserInput, UserUncheckedCreateWithoutApprovedByUserInput> | UserCreateWithoutApprovedByUserInput[] | UserUncheckedCreateWithoutApprovedByUserInput[]
+    connectOrCreate?: UserCreateOrConnectWithoutApprovedByUserInput | UserCreateOrConnectWithoutApprovedByUserInput[]
+    upsert?: UserUpsertWithWhereUniqueWithoutApprovedByUserInput | UserUpsertWithWhereUniqueWithoutApprovedByUserInput[]
+    createMany?: UserCreateManyApprovedByUserInputEnvelope
+    set?: UserWhereUniqueInput | UserWhereUniqueInput[]
+    disconnect?: UserWhereUniqueInput | UserWhereUniqueInput[]
+    delete?: UserWhereUniqueInput | UserWhereUniqueInput[]
+    connect?: UserWhereUniqueInput | UserWhereUniqueInput[]
+    update?: UserUpdateWithWhereUniqueWithoutApprovedByUserInput | UserUpdateWithWhereUniqueWithoutApprovedByUserInput[]
+    updateMany?: UserUpdateManyWithWhereWithoutApprovedByUserInput | UserUpdateManyWithWhereWithoutApprovedByUserInput[]
+    deleteMany?: UserScalarWhereInput | UserScalarWhereInput[]
   }
 
   export type CommentUpdateManyWithoutUserNestedInput = {
@@ -17310,6 +17514,20 @@ export namespace Prisma {
     delete?: OrganizationWhereInput | boolean
     connect?: OrganizationWhereUniqueInput
     update?: XOR<XOR<OrganizationUpdateToOneWithWhereWithoutUsersInput, OrganizationUpdateWithoutUsersInput>, OrganizationUncheckedUpdateWithoutUsersInput>
+  }
+
+  export type UserUncheckedUpdateManyWithoutApprovedByUserNestedInput = {
+    create?: XOR<UserCreateWithoutApprovedByUserInput, UserUncheckedCreateWithoutApprovedByUserInput> | UserCreateWithoutApprovedByUserInput[] | UserUncheckedCreateWithoutApprovedByUserInput[]
+    connectOrCreate?: UserCreateOrConnectWithoutApprovedByUserInput | UserCreateOrConnectWithoutApprovedByUserInput[]
+    upsert?: UserUpsertWithWhereUniqueWithoutApprovedByUserInput | UserUpsertWithWhereUniqueWithoutApprovedByUserInput[]
+    createMany?: UserCreateManyApprovedByUserInputEnvelope
+    set?: UserWhereUniqueInput | UserWhereUniqueInput[]
+    disconnect?: UserWhereUniqueInput | UserWhereUniqueInput[]
+    delete?: UserWhereUniqueInput | UserWhereUniqueInput[]
+    connect?: UserWhereUniqueInput | UserWhereUniqueInput[]
+    update?: UserUpdateWithWhereUniqueWithoutApprovedByUserInput | UserUpdateWithWhereUniqueWithoutApprovedByUserInput[]
+    updateMany?: UserUpdateManyWithWhereWithoutApprovedByUserInput | UserUpdateManyWithWhereWithoutApprovedByUserInput[]
+    deleteMany?: UserScalarWhereInput | UserScalarWhereInput[]
   }
 
   export type CommentUncheckedUpdateManyWithoutUserNestedInput = {
@@ -18049,6 +18267,105 @@ export namespace Prisma {
     _max?: NestedFloatFilter<$PrismaModel>
   }
 
+  export type UserCreateWithoutApprovedUsersInput = {
+    id?: string
+    name: string
+    email: string
+    password: string
+    role?: $Enums.Role
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    otp?: string | null
+    otpExpiry?: Date | string | null
+    otpVerifiedAt?: Date | string | null
+    twoFactorEnabled?: boolean
+    isApproved?: boolean
+    approvedAt?: Date | string | null
+    approvedByUser?: UserCreateNestedOneWithoutApprovedUsersInput
+    comments?: CommentCreateNestedManyWithoutUserInput
+    assignedTickets?: TicketCreateNestedManyWithoutAssignedToInput
+    tickets?: TicketCreateNestedManyWithoutCreatedByInput
+    organization?: OrganizationCreateNestedOneWithoutUsersInput
+  }
+
+  export type UserUncheckedCreateWithoutApprovedUsersInput = {
+    id?: string
+    name: string
+    email: string
+    password: string
+    role?: $Enums.Role
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    organizationId?: string | null
+    otp?: string | null
+    otpExpiry?: Date | string | null
+    otpVerifiedAt?: Date | string | null
+    twoFactorEnabled?: boolean
+    isApproved?: boolean
+    approvedAt?: Date | string | null
+    approvedBy?: string | null
+    comments?: CommentUncheckedCreateNestedManyWithoutUserInput
+    assignedTickets?: TicketUncheckedCreateNestedManyWithoutAssignedToInput
+    tickets?: TicketUncheckedCreateNestedManyWithoutCreatedByInput
+  }
+
+  export type UserCreateOrConnectWithoutApprovedUsersInput = {
+    where: UserWhereUniqueInput
+    create: XOR<UserCreateWithoutApprovedUsersInput, UserUncheckedCreateWithoutApprovedUsersInput>
+  }
+
+  export type UserCreateWithoutApprovedByUserInput = {
+    id?: string
+    name: string
+    email: string
+    password: string
+    role?: $Enums.Role
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    otp?: string | null
+    otpExpiry?: Date | string | null
+    otpVerifiedAt?: Date | string | null
+    twoFactorEnabled?: boolean
+    isApproved?: boolean
+    approvedAt?: Date | string | null
+    approvedUsers?: UserCreateNestedManyWithoutApprovedByUserInput
+    comments?: CommentCreateNestedManyWithoutUserInput
+    assignedTickets?: TicketCreateNestedManyWithoutAssignedToInput
+    tickets?: TicketCreateNestedManyWithoutCreatedByInput
+    organization?: OrganizationCreateNestedOneWithoutUsersInput
+  }
+
+  export type UserUncheckedCreateWithoutApprovedByUserInput = {
+    id?: string
+    name: string
+    email: string
+    password: string
+    role?: $Enums.Role
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    organizationId?: string | null
+    otp?: string | null
+    otpExpiry?: Date | string | null
+    otpVerifiedAt?: Date | string | null
+    twoFactorEnabled?: boolean
+    isApproved?: boolean
+    approvedAt?: Date | string | null
+    approvedUsers?: UserUncheckedCreateNestedManyWithoutApprovedByUserInput
+    comments?: CommentUncheckedCreateNestedManyWithoutUserInput
+    assignedTickets?: TicketUncheckedCreateNestedManyWithoutAssignedToInput
+    tickets?: TicketUncheckedCreateNestedManyWithoutCreatedByInput
+  }
+
+  export type UserCreateOrConnectWithoutApprovedByUserInput = {
+    where: UserWhereUniqueInput
+    create: XOR<UserCreateWithoutApprovedByUserInput, UserUncheckedCreateWithoutApprovedByUserInput>
+  }
+
+  export type UserCreateManyApprovedByUserInputEnvelope = {
+    data: UserCreateManyApprovedByUserInput | UserCreateManyApprovedByUserInput[]
+    skipDuplicates?: boolean
+  }
+
   export type CommentCreateWithoutUserInput = {
     id?: string
     content: string
@@ -18200,6 +18517,96 @@ export namespace Prisma {
   export type OrganizationCreateOrConnectWithoutUsersInput = {
     where: OrganizationWhereUniqueInput
     create: XOR<OrganizationCreateWithoutUsersInput, OrganizationUncheckedCreateWithoutUsersInput>
+  }
+
+  export type UserUpsertWithoutApprovedUsersInput = {
+    update: XOR<UserUpdateWithoutApprovedUsersInput, UserUncheckedUpdateWithoutApprovedUsersInput>
+    create: XOR<UserCreateWithoutApprovedUsersInput, UserUncheckedCreateWithoutApprovedUsersInput>
+    where?: UserWhereInput
+  }
+
+  export type UserUpdateToOneWithWhereWithoutApprovedUsersInput = {
+    where?: UserWhereInput
+    data: XOR<UserUpdateWithoutApprovedUsersInput, UserUncheckedUpdateWithoutApprovedUsersInput>
+  }
+
+  export type UserUpdateWithoutApprovedUsersInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    password?: StringFieldUpdateOperationsInput | string
+    role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    otp?: NullableStringFieldUpdateOperationsInput | string | null
+    otpExpiry?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    otpVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    twoFactorEnabled?: BoolFieldUpdateOperationsInput | boolean
+    isApproved?: BoolFieldUpdateOperationsInput | boolean
+    approvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    approvedByUser?: UserUpdateOneWithoutApprovedUsersNestedInput
+    comments?: CommentUpdateManyWithoutUserNestedInput
+    assignedTickets?: TicketUpdateManyWithoutAssignedToNestedInput
+    tickets?: TicketUpdateManyWithoutCreatedByNestedInput
+    organization?: OrganizationUpdateOneWithoutUsersNestedInput
+  }
+
+  export type UserUncheckedUpdateWithoutApprovedUsersInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    password?: StringFieldUpdateOperationsInput | string
+    role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    organizationId?: NullableStringFieldUpdateOperationsInput | string | null
+    otp?: NullableStringFieldUpdateOperationsInput | string | null
+    otpExpiry?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    otpVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    twoFactorEnabled?: BoolFieldUpdateOperationsInput | boolean
+    isApproved?: BoolFieldUpdateOperationsInput | boolean
+    approvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    approvedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    comments?: CommentUncheckedUpdateManyWithoutUserNestedInput
+    assignedTickets?: TicketUncheckedUpdateManyWithoutAssignedToNestedInput
+    tickets?: TicketUncheckedUpdateManyWithoutCreatedByNestedInput
+  }
+
+  export type UserUpsertWithWhereUniqueWithoutApprovedByUserInput = {
+    where: UserWhereUniqueInput
+    update: XOR<UserUpdateWithoutApprovedByUserInput, UserUncheckedUpdateWithoutApprovedByUserInput>
+    create: XOR<UserCreateWithoutApprovedByUserInput, UserUncheckedCreateWithoutApprovedByUserInput>
+  }
+
+  export type UserUpdateWithWhereUniqueWithoutApprovedByUserInput = {
+    where: UserWhereUniqueInput
+    data: XOR<UserUpdateWithoutApprovedByUserInput, UserUncheckedUpdateWithoutApprovedByUserInput>
+  }
+
+  export type UserUpdateManyWithWhereWithoutApprovedByUserInput = {
+    where: UserScalarWhereInput
+    data: XOR<UserUpdateManyMutationInput, UserUncheckedUpdateManyWithoutApprovedByUserInput>
+  }
+
+  export type UserScalarWhereInput = {
+    AND?: UserScalarWhereInput | UserScalarWhereInput[]
+    OR?: UserScalarWhereInput[]
+    NOT?: UserScalarWhereInput | UserScalarWhereInput[]
+    id?: StringFilter<"User"> | string
+    name?: StringFilter<"User"> | string
+    email?: StringFilter<"User"> | string
+    password?: StringFilter<"User"> | string
+    role?: EnumRoleFilter<"User"> | $Enums.Role
+    createdAt?: DateTimeFilter<"User"> | Date | string
+    updatedAt?: DateTimeFilter<"User"> | Date | string
+    organizationId?: StringNullableFilter<"User"> | string | null
+    otp?: StringNullableFilter<"User"> | string | null
+    otpExpiry?: DateTimeNullableFilter<"User"> | Date | string | null
+    otpVerifiedAt?: DateTimeNullableFilter<"User"> | Date | string | null
+    twoFactorEnabled?: BoolFilter<"User"> | boolean
+    isApproved?: BoolFilter<"User"> | boolean
+    approvedAt?: DateTimeNullableFilter<"User"> | Date | string | null
+    approvedBy?: StringNullableFilter<"User"> | string | null
   }
 
   export type CommentUpsertWithWhereUniqueWithoutUserInput = {
@@ -18355,6 +18762,10 @@ export namespace Prisma {
     otpExpiry?: Date | string | null
     otpVerifiedAt?: Date | string | null
     twoFactorEnabled?: boolean
+    isApproved?: boolean
+    approvedAt?: Date | string | null
+    approvedByUser?: UserCreateNestedOneWithoutApprovedUsersInput
+    approvedUsers?: UserCreateNestedManyWithoutApprovedByUserInput
     comments?: CommentCreateNestedManyWithoutUserInput
     assignedTickets?: TicketCreateNestedManyWithoutAssignedToInput
     tickets?: TicketCreateNestedManyWithoutCreatedByInput
@@ -18372,6 +18783,10 @@ export namespace Prisma {
     otpExpiry?: Date | string | null
     otpVerifiedAt?: Date | string | null
     twoFactorEnabled?: boolean
+    isApproved?: boolean
+    approvedAt?: Date | string | null
+    approvedBy?: string | null
+    approvedUsers?: UserUncheckedCreateNestedManyWithoutApprovedByUserInput
     comments?: CommentUncheckedCreateNestedManyWithoutUserInput
     assignedTickets?: TicketUncheckedCreateNestedManyWithoutAssignedToInput
     tickets?: TicketUncheckedCreateNestedManyWithoutCreatedByInput
@@ -18466,24 +18881,6 @@ export namespace Prisma {
   export type UserUpdateManyWithWhereWithoutOrganizationInput = {
     where: UserScalarWhereInput
     data: XOR<UserUpdateManyMutationInput, UserUncheckedUpdateManyWithoutOrganizationInput>
-  }
-
-  export type UserScalarWhereInput = {
-    AND?: UserScalarWhereInput | UserScalarWhereInput[]
-    OR?: UserScalarWhereInput[]
-    NOT?: UserScalarWhereInput | UserScalarWhereInput[]
-    id?: StringFilter<"User"> | string
-    name?: StringFilter<"User"> | string
-    email?: StringFilter<"User"> | string
-    password?: StringFilter<"User"> | string
-    role?: EnumRoleFilter<"User"> | $Enums.Role
-    createdAt?: DateTimeFilter<"User"> | Date | string
-    updatedAt?: DateTimeFilter<"User"> | Date | string
-    organizationId?: StringNullableFilter<"User"> | string | null
-    otp?: StringNullableFilter<"User"> | string | null
-    otpExpiry?: DateTimeNullableFilter<"User"> | Date | string | null
-    otpVerifiedAt?: DateTimeNullableFilter<"User"> | Date | string | null
-    twoFactorEnabled?: BoolFilter<"User"> | boolean
   }
 
   export type SlaPolicyUpsertWithWhereUniqueWithoutOrganizationInput = {
@@ -18644,6 +19041,10 @@ export namespace Prisma {
     otpExpiry?: Date | string | null
     otpVerifiedAt?: Date | string | null
     twoFactorEnabled?: boolean
+    isApproved?: boolean
+    approvedAt?: Date | string | null
+    approvedByUser?: UserCreateNestedOneWithoutApprovedUsersInput
+    approvedUsers?: UserCreateNestedManyWithoutApprovedByUserInput
     comments?: CommentCreateNestedManyWithoutUserInput
     tickets?: TicketCreateNestedManyWithoutCreatedByInput
     organization?: OrganizationCreateNestedOneWithoutUsersInput
@@ -18662,6 +19063,10 @@ export namespace Prisma {
     otpExpiry?: Date | string | null
     otpVerifiedAt?: Date | string | null
     twoFactorEnabled?: boolean
+    isApproved?: boolean
+    approvedAt?: Date | string | null
+    approvedBy?: string | null
+    approvedUsers?: UserUncheckedCreateNestedManyWithoutApprovedByUserInput
     comments?: CommentUncheckedCreateNestedManyWithoutUserInput
     tickets?: TicketUncheckedCreateNestedManyWithoutCreatedByInput
   }
@@ -18683,6 +19088,10 @@ export namespace Prisma {
     otpExpiry?: Date | string | null
     otpVerifiedAt?: Date | string | null
     twoFactorEnabled?: boolean
+    isApproved?: boolean
+    approvedAt?: Date | string | null
+    approvedByUser?: UserCreateNestedOneWithoutApprovedUsersInput
+    approvedUsers?: UserCreateNestedManyWithoutApprovedByUserInput
     comments?: CommentCreateNestedManyWithoutUserInput
     assignedTickets?: TicketCreateNestedManyWithoutAssignedToInput
     organization?: OrganizationCreateNestedOneWithoutUsersInput
@@ -18701,6 +19110,10 @@ export namespace Prisma {
     otpExpiry?: Date | string | null
     otpVerifiedAt?: Date | string | null
     twoFactorEnabled?: boolean
+    isApproved?: boolean
+    approvedAt?: Date | string | null
+    approvedBy?: string | null
+    approvedUsers?: UserUncheckedCreateNestedManyWithoutApprovedByUserInput
     comments?: CommentUncheckedCreateNestedManyWithoutUserInput
     assignedTickets?: TicketUncheckedCreateNestedManyWithoutAssignedToInput
   }
@@ -18810,6 +19223,10 @@ export namespace Prisma {
     otpExpiry?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     otpVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     twoFactorEnabled?: BoolFieldUpdateOperationsInput | boolean
+    isApproved?: BoolFieldUpdateOperationsInput | boolean
+    approvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    approvedByUser?: UserUpdateOneWithoutApprovedUsersNestedInput
+    approvedUsers?: UserUpdateManyWithoutApprovedByUserNestedInput
     comments?: CommentUpdateManyWithoutUserNestedInput
     tickets?: TicketUpdateManyWithoutCreatedByNestedInput
     organization?: OrganizationUpdateOneWithoutUsersNestedInput
@@ -18828,6 +19245,10 @@ export namespace Prisma {
     otpExpiry?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     otpVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     twoFactorEnabled?: BoolFieldUpdateOperationsInput | boolean
+    isApproved?: BoolFieldUpdateOperationsInput | boolean
+    approvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    approvedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    approvedUsers?: UserUncheckedUpdateManyWithoutApprovedByUserNestedInput
     comments?: CommentUncheckedUpdateManyWithoutUserNestedInput
     tickets?: TicketUncheckedUpdateManyWithoutCreatedByNestedInput
   }
@@ -18855,6 +19276,10 @@ export namespace Prisma {
     otpExpiry?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     otpVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     twoFactorEnabled?: BoolFieldUpdateOperationsInput | boolean
+    isApproved?: BoolFieldUpdateOperationsInput | boolean
+    approvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    approvedByUser?: UserUpdateOneWithoutApprovedUsersNestedInput
+    approvedUsers?: UserUpdateManyWithoutApprovedByUserNestedInput
     comments?: CommentUpdateManyWithoutUserNestedInput
     assignedTickets?: TicketUpdateManyWithoutAssignedToNestedInput
     organization?: OrganizationUpdateOneWithoutUsersNestedInput
@@ -18873,6 +19298,10 @@ export namespace Prisma {
     otpExpiry?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     otpVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     twoFactorEnabled?: BoolFieldUpdateOperationsInput | boolean
+    isApproved?: BoolFieldUpdateOperationsInput | boolean
+    approvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    approvedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    approvedUsers?: UserUncheckedUpdateManyWithoutApprovedByUserNestedInput
     comments?: CommentUncheckedUpdateManyWithoutUserNestedInput
     assignedTickets?: TicketUncheckedUpdateManyWithoutAssignedToNestedInput
   }
@@ -18971,6 +19400,10 @@ export namespace Prisma {
     otpExpiry?: Date | string | null
     otpVerifiedAt?: Date | string | null
     twoFactorEnabled?: boolean
+    isApproved?: boolean
+    approvedAt?: Date | string | null
+    approvedByUser?: UserCreateNestedOneWithoutApprovedUsersInput
+    approvedUsers?: UserCreateNestedManyWithoutApprovedByUserInput
     assignedTickets?: TicketCreateNestedManyWithoutAssignedToInput
     tickets?: TicketCreateNestedManyWithoutCreatedByInput
     organization?: OrganizationCreateNestedOneWithoutUsersInput
@@ -18989,6 +19422,10 @@ export namespace Prisma {
     otpExpiry?: Date | string | null
     otpVerifiedAt?: Date | string | null
     twoFactorEnabled?: boolean
+    isApproved?: boolean
+    approvedAt?: Date | string | null
+    approvedBy?: string | null
+    approvedUsers?: UserUncheckedCreateNestedManyWithoutApprovedByUserInput
     assignedTickets?: TicketUncheckedCreateNestedManyWithoutAssignedToInput
     tickets?: TicketUncheckedCreateNestedManyWithoutCreatedByInput
   }
@@ -19102,6 +19539,10 @@ export namespace Prisma {
     otpExpiry?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     otpVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     twoFactorEnabled?: BoolFieldUpdateOperationsInput | boolean
+    isApproved?: BoolFieldUpdateOperationsInput | boolean
+    approvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    approvedByUser?: UserUpdateOneWithoutApprovedUsersNestedInput
+    approvedUsers?: UserUpdateManyWithoutApprovedByUserNestedInput
     assignedTickets?: TicketUpdateManyWithoutAssignedToNestedInput
     tickets?: TicketUpdateManyWithoutCreatedByNestedInput
     organization?: OrganizationUpdateOneWithoutUsersNestedInput
@@ -19120,6 +19561,10 @@ export namespace Prisma {
     otpExpiry?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     otpVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     twoFactorEnabled?: BoolFieldUpdateOperationsInput | boolean
+    isApproved?: BoolFieldUpdateOperationsInput | boolean
+    approvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    approvedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    approvedUsers?: UserUncheckedUpdateManyWithoutApprovedByUserNestedInput
     assignedTickets?: TicketUncheckedUpdateManyWithoutAssignedToNestedInput
     tickets?: TicketUncheckedUpdateManyWithoutCreatedByNestedInput
   }
@@ -19410,6 +19855,23 @@ export namespace Prisma {
     data: XOR<TicketUpdateManyMutationInput, TicketUncheckedUpdateManyWithoutSlaPolicyInput>
   }
 
+  export type UserCreateManyApprovedByUserInput = {
+    id?: string
+    name: string
+    email: string
+    password: string
+    role?: $Enums.Role
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    organizationId?: string | null
+    otp?: string | null
+    otpExpiry?: Date | string | null
+    otpVerifiedAt?: Date | string | null
+    twoFactorEnabled?: boolean
+    isApproved?: boolean
+    approvedAt?: Date | string | null
+  }
+
   export type CommentCreateManyUserInput = {
     id?: string
     content: string
@@ -19452,6 +19914,65 @@ export namespace Prisma {
     respondedAt?: Date | string | null
     resolvedAt?: Date | string | null
     slaBreached?: boolean
+  }
+
+  export type UserUpdateWithoutApprovedByUserInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    password?: StringFieldUpdateOperationsInput | string
+    role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    otp?: NullableStringFieldUpdateOperationsInput | string | null
+    otpExpiry?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    otpVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    twoFactorEnabled?: BoolFieldUpdateOperationsInput | boolean
+    isApproved?: BoolFieldUpdateOperationsInput | boolean
+    approvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    approvedUsers?: UserUpdateManyWithoutApprovedByUserNestedInput
+    comments?: CommentUpdateManyWithoutUserNestedInput
+    assignedTickets?: TicketUpdateManyWithoutAssignedToNestedInput
+    tickets?: TicketUpdateManyWithoutCreatedByNestedInput
+    organization?: OrganizationUpdateOneWithoutUsersNestedInput
+  }
+
+  export type UserUncheckedUpdateWithoutApprovedByUserInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    password?: StringFieldUpdateOperationsInput | string
+    role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    organizationId?: NullableStringFieldUpdateOperationsInput | string | null
+    otp?: NullableStringFieldUpdateOperationsInput | string | null
+    otpExpiry?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    otpVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    twoFactorEnabled?: BoolFieldUpdateOperationsInput | boolean
+    isApproved?: BoolFieldUpdateOperationsInput | boolean
+    approvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    approvedUsers?: UserUncheckedUpdateManyWithoutApprovedByUserNestedInput
+    comments?: CommentUncheckedUpdateManyWithoutUserNestedInput
+    assignedTickets?: TicketUncheckedUpdateManyWithoutAssignedToNestedInput
+    tickets?: TicketUncheckedUpdateManyWithoutCreatedByNestedInput
+  }
+
+  export type UserUncheckedUpdateManyWithoutApprovedByUserInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    password?: StringFieldUpdateOperationsInput | string
+    role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    organizationId?: NullableStringFieldUpdateOperationsInput | string | null
+    otp?: NullableStringFieldUpdateOperationsInput | string | null
+    otpExpiry?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    otpVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    twoFactorEnabled?: BoolFieldUpdateOperationsInput | boolean
+    isApproved?: BoolFieldUpdateOperationsInput | boolean
+    approvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   }
 
   export type CommentUpdateWithoutUserInput = {
@@ -19617,6 +20138,9 @@ export namespace Prisma {
     otpExpiry?: Date | string | null
     otpVerifiedAt?: Date | string | null
     twoFactorEnabled?: boolean
+    isApproved?: boolean
+    approvedAt?: Date | string | null
+    approvedBy?: string | null
   }
 
   export type SlaPolicyCreateManyOrganizationInput = {
@@ -19670,6 +20194,10 @@ export namespace Prisma {
     otpExpiry?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     otpVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     twoFactorEnabled?: BoolFieldUpdateOperationsInput | boolean
+    isApproved?: BoolFieldUpdateOperationsInput | boolean
+    approvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    approvedByUser?: UserUpdateOneWithoutApprovedUsersNestedInput
+    approvedUsers?: UserUpdateManyWithoutApprovedByUserNestedInput
     comments?: CommentUpdateManyWithoutUserNestedInput
     assignedTickets?: TicketUpdateManyWithoutAssignedToNestedInput
     tickets?: TicketUpdateManyWithoutCreatedByNestedInput
@@ -19687,6 +20215,10 @@ export namespace Prisma {
     otpExpiry?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     otpVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     twoFactorEnabled?: BoolFieldUpdateOperationsInput | boolean
+    isApproved?: BoolFieldUpdateOperationsInput | boolean
+    approvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    approvedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    approvedUsers?: UserUncheckedUpdateManyWithoutApprovedByUserNestedInput
     comments?: CommentUncheckedUpdateManyWithoutUserNestedInput
     assignedTickets?: TicketUncheckedUpdateManyWithoutAssignedToNestedInput
     tickets?: TicketUncheckedUpdateManyWithoutCreatedByNestedInput
@@ -19704,6 +20236,9 @@ export namespace Prisma {
     otpExpiry?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     otpVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     twoFactorEnabled?: BoolFieldUpdateOperationsInput | boolean
+    isApproved?: BoolFieldUpdateOperationsInput | boolean
+    approvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    approvedBy?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type SlaPolicyUpdateWithoutOrganizationInput = {

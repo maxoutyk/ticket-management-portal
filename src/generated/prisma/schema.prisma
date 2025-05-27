@@ -21,6 +21,11 @@ model User {
   otpExpiry        DateTime?
   otpVerifiedAt    DateTime?
   twoFactorEnabled Boolean       @default(false)
+  isApproved       Boolean       @default(false)
+  approvedAt       DateTime?
+  approvedBy       String?
+  approvedByUser   User?         @relation("UserApprovals", fields: [approvedBy], references: [id])
+  approvedUsers    User[]        @relation("UserApprovals")
   comments         Comment[]
   assignedTickets  Ticket[]      @relation("AssignedTickets")
   tickets          Ticket[]      @relation("CreatedTickets")

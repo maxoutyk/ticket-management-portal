@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth/next";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { authOptions } from "../../auth/[...nextauth]/route";
 
 // GET all SLA policies
 export async function GET(request: Request) {
@@ -19,12 +19,24 @@ export async function GET(request: Request) {
     // Get query parameters
     const url = new URL(request.url);
     const organizationId = url.searchParams.get("organizationId");
+    const page = parseInt(url.searchParams.get("page") || "1");
+    const limit = parseInt(url.searchParams.get("limit") || "10");
+    const skip = (page - 1) * limit;
 
     // Build query
-    const whereClause = organizationId 
-      ? { organizationId } 
-      : {};
+    let whereClause = {};
+    if (organizationId === "null") {
+      whereClause = { organizationId: null };
+    } else if (organizationId) {
+      whereClause = { organizationId };
+    }
 
+    // Get total count for pagination
+    const totalCount = await prisma.slaPolicy.count({
+      where: whereClause,
+    });
+
+    // Get paginated policies
     const policies = await prisma.slaPolicy.findMany({
       where: whereClause,
       include: {
@@ -38,9 +50,19 @@ export async function GET(request: Request) {
       orderBy: {
         createdAt: "desc",
       },
+      skip,
+      take: limit,
     });
 
-    return NextResponse.json(policies);
+    return NextResponse.json({
+      policies,
+      pagination: {
+        total: totalCount,
+        pages: Math.ceil(totalCount / limit),
+        currentPage: page,
+        limit,
+      }
+    });
   } catch (error) {
     console.error("Error fetching SLA policies:", error);
     return NextResponse.json(

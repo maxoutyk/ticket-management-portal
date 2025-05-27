@@ -6,6 +6,30 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { FiPaperclip, FiX, FiDownload } from "react-icons/fi";
 import PageContainer from "@/components/dashboard/PageContainer";
+import { formatResolutionTime } from '@/lib/timeFormatting';
+import type { Prisma } from '@/generated/prisma';
+import { use } from "react";
+
+type TicketWithRelations = Prisma.TicketGetPayload<{
+  include: {
+    comments: {
+      include: {
+        user: true;
+        attachments: true;
+      }
+    };
+    attachments: true;
+    createdBy: true;
+    assignedTo: true;
+  }
+}>;
+
+type CommentWithRelations = Prisma.CommentGetPayload<{
+  include: {
+    user: true;
+    attachments: true;
+  }
+}>;
 
 interface User {
   id: string;
@@ -32,44 +56,17 @@ interface Comment {
   attachments: Document[];
 }
 
-interface Ticket {
-  id: string;
-  title: string;
-  description: string;
-  status: string;
-  priority: string;
-  createdAt: string;
-  createdBy: User;
-  assignedTo: User | null;
-  comments: Comment[];
-  attachments: Document[];
-  ticketNumber?: string;
-}
-
 interface TicketDetailProps {
-  params: {
-    id: string;
-  };
+  params: Promise<{ id: string }>;
 }
 
 export default function TicketDetailPage({ params }: TicketDetailProps) {
-  // Fix for Next.js params warning
-  const resolvedParams = Promise.resolve(params);
-  const [id, setId] = useState("");
-  
-  useEffect(() => {
-    async function resolveId() {
-      const p = await resolvedParams;
-      setId(p.id);
-    }
-    resolveId();
-  }, [resolvedParams]);
-  
+  const { id } = use(params);
   const { data: session, status } = useSession();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
-  const [ticket, setTicket] = useState<Ticket | null>(null);
+  const [ticket, setTicket] = useState<TicketWithRelations | null>(null);
   const userRole = session?.user?.role || "USER";
   
   const [comment, setComment] = useState("");
@@ -104,10 +101,25 @@ export default function TicketDetailPage({ params }: TicketDetailProps) {
   ];
   const maxFileSize = 5 * 1024 * 1024; // 5MB
 
+  const [resolutionMetrics, setResolutionMetrics] = useState<{
+    resolutionTimeHours: number | null;
+    isWithinSla: boolean | null;
+    slaTarget: number | null;
+    breachScore: number | null;
+    breachTime: number | null;
+    status: 'UNRESOLVED' | 'RESOLVED' | 'RESOLVED_WITH_BREACH';
+    policySource: 'ORGANIZATION' | 'GLOBAL' | null;
+    policyName: string | null;
+  } | null>(null);
+
+  const [resolutionMetricsError, setResolutionMetricsError] = useState<string | null>(null);
+
+  const [comments, setComments] = useState<CommentWithRelations[]>([]);
+
   useEffect(() => {
     if (status === "unauthenticated") {
       router.push("/login");
-    } else if (status === "authenticated" && id) {
+    } else if (status === "authenticated") {
       fetchTicket();
       
       // Fetch employees if user is an admin
@@ -115,11 +127,33 @@ export default function TicketDetailPage({ params }: TicketDetailProps) {
         fetchEmployees();
       }
     }
-  }, [status, router, id, userRole]);
+  }, [status, router, userRole]);
+
+  useEffect(() => {
+    async function loadResolutionMetrics() {
+      if (ticket) {
+        try {
+          setResolutionMetricsError(null);
+          const response = await fetch(`/api/tickets/${ticket.id}/resolution`);
+          
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Failed to fetch resolution metrics');
+          }
+          
+          const metrics = await response.json();
+          setResolutionMetrics(metrics);
+        } catch (error) {
+          console.error('Error loading resolution metrics:', error);
+          setResolutionMetricsError('Failed to load resolution time');
+          setResolutionMetrics(null);
+        }
+      }
+    }
+    loadResolutionMetrics();
+  }, [ticket]);
 
   const fetchTicket = async () => {
-    if (!id) return;
-    
     try {
       const response = await fetch(`/api/tickets/${id}`, {
         method: "GET",
@@ -161,7 +195,7 @@ export default function TicketDetailPage({ params }: TicketDetailProps) {
       setEmployees(data);
     } catch (error) {
       console.error("Error fetching employees:", error);
-      setError("Failed to load employees list");
+      setError("Failed to load employees");
     } finally {
       setLoadingEmployees(false);
     }
@@ -760,6 +794,96 @@ export default function TicketDetailPage({ params }: TicketDetailProps) {
           </div>
         )}
       </div>
+      
+      {/* Resolution Time and SLA Metrics */}
+      {ticket && (
+        <div className="bg-white shadow-sm rounded-lg border border-gray-200 p-6 mb-6">
+          <h3 className="text-lg font-medium text-gray-900 mb-4">Resolution Metrics</h3>
+          
+          {resolutionMetricsError ? (
+            <div className="text-red-600 text-sm">
+              {resolutionMetricsError}
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {/* Resolution Time */}
+              <div className="flex items-center justify-between">
+                <span className="text-gray-600">Resolution Time:</span>
+                <span className="font-medium">
+                  {resolutionMetrics ? formatResolutionTime(resolutionMetrics.resolutionTimeHours) : 'Calculating...'}
+                </span>
+              </div>
+              
+              {/* SLA Policy Info */}
+              {resolutionMetrics?.policySource && (
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-600">SLA Policy:</span>
+                  <div className="flex items-center">
+                    <span className="font-medium mr-2">{resolutionMetrics.policyName}</span>
+                    <span className={`text-xs px-2 py-1 rounded-full ${
+                      resolutionMetrics.policySource === 'ORGANIZATION' 
+                        ? 'bg-purple-100 text-purple-800' 
+                        : 'bg-blue-100 text-blue-800'
+                    }`}>
+                      {resolutionMetrics.policySource === 'ORGANIZATION' ? 'Organization' : 'Global'}
+                    </span>
+                  </div>
+                </div>
+              )}
+              
+              {/* SLA Target */}
+              {resolutionMetrics?.slaTarget && (
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-600">SLA Target:</span>
+                  <span className="font-medium">{formatResolutionTime(resolutionMetrics.slaTarget)}</span>
+                </div>
+              )}
+              
+              {/* SLA Status */}
+              {resolutionMetrics?.status !== 'UNRESOLVED' && (
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-600">SLA Status:</span>
+                  <div className="flex items-center space-x-2">
+                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                      resolutionMetrics?.isWithinSla
+                        ? 'bg-green-100 text-green-800'
+                        : 'bg-red-100 text-red-800'
+                    }`}>
+                      {resolutionMetrics?.isWithinSla ? 'Within SLA' : 'SLA Breached'}
+                    </span>
+                    {resolutionMetrics?.breachScore !== null && resolutionMetrics?.breachTime && (
+                      <span className="text-sm text-gray-500">
+                        ({resolutionMetrics?.breachScore}% over target, {formatResolutionTime(resolutionMetrics?.breachTime)} exceeded)
+                      </span>
+                    )}
+                  </div>
+                </div>
+              )}
+              
+              {/* Progress Bar for SLA */}
+              {resolutionMetrics?.slaTarget && resolutionMetrics.resolutionTimeHours !== null && (
+                <div className="mt-4">
+                  <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                    <div 
+                      className={`h-full ${resolutionMetrics?.isWithinSla ? 'bg-green-500' : 'bg-red-500'}`}
+                      style={{ 
+                        width: `${Math.min(
+                          ((resolutionMetrics?.resolutionTimeHours || 0) / resolutionMetrics?.slaTarget) * 100,
+                          100
+                        )}%` 
+                      }}
+                    />
+                  </div>
+                  <div className="flex justify-between mt-1 text-xs text-gray-500">
+                    <span>0</span>
+                    <span>{formatResolutionTime(resolutionMetrics?.slaTarget)}</span>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
       
       {/* Comments section */}
       <div className="bg-white shadow-sm rounded-lg border border-gray-200 overflow-hidden p-6">

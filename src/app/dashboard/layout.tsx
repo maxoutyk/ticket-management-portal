@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { useSession, signOut } from "next-auth/react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
-import { UsersIcon, CogIcon, ClockIcon } from "@heroicons/react/24/outline";
+import { UsersIcon, CogIcon, ClockIcon, UserGroupIcon } from "@heroicons/react/24/outline";
 
 export default function DashboardLayout({
   children,
@@ -139,6 +139,19 @@ export default function DashboardLayout({
               {/* Admin specific links */}
               {userRole === "ADMIN" && (
                 <>
+                  <li>
+                    <Link 
+                      href="/dashboard/admin/approvals" 
+                      className={`flex items-center p-2 rounded-lg transition-colors ${
+                        isActive("/dashboard/admin/approvals") 
+                          ? "bg-blue-50 text-incite-navy" 
+                          : "text-gray-600 hover:bg-gray-50 hover:text-incite-red"
+                      }`}
+                    >
+                      <UserGroupIcon className="h-5 w-5 mr-3 flex-shrink-0" />
+                      <span className={sidebarCollapsed ? "hidden" : "block"}>User Approvals</span>
+                    </Link>
+                  </li>
                   <li>
                     <Link 
                       href="/dashboard/all-tickets" 

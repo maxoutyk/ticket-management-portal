@@ -1,14 +1,37 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import { signIn, useSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { ArrowLeftIcon } from "@heroicons/react/24/outline";
 import { AuthCard } from "@/components/auth/AuthCard";
 import { FormInput } from "@/components/auth/FormInput";
 import { Button } from "@/components/auth/Button";
+import { use } from "react";
 
-export default function LoginPage() {
+interface Organization {
+  id: string;
+  name: string;
+}
+
+interface SlaPolicy {
+  id: string;
+  name: string;
+  description: string | null;
+  responseTimeHours: number;
+  resolutionTimeHours: number;
+  active: boolean;
+  priorityLevel: "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
+  organizationId: string | null;
+  organization: Organization | null;
+}
+
+interface TicketDetailProps {
+  params: Promise<{ id: string }>;
+}
+
+function LoginForm() {
   const router = useRouter();
   const { data: session, status } = useSession();
   const searchParams = useSearchParams();
@@ -198,19 +221,26 @@ export default function LoginPage() {
     }
   };
 
-  const verifyOtp = async () => {
+  const handleResendOtp = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    await requestOtp();
+  };
+
+  const handleVerifyOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
     if (!formData.otp) {
       setError("Please enter the verification code");
       return;
     }
-
+    
     setIsLoading(true);
+    setError("");
+
     try {
-      console.log("Starting OTP verification with code:", formData.otp);
-      
-      // Verify OTP
-      const otpResponse = await fetch("/api/auth/otp", {
-        method: "PUT",
+      // First verify the OTP through the API
+      const verifyResponse = await fetch("/api/auth/otp/verify", {
+        method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
@@ -220,32 +250,24 @@ export default function LoginPage() {
         }),
       });
 
-      if (!otpResponse.ok) {
-        const data = await otpResponse.json();
-        throw new Error(data.error || "Invalid verification code");
+      if (!verifyResponse.ok) {
+        const errorData = await verifyResponse.json();
+        throw new Error(errorData.error || "Failed to verify code");
       }
 
-      console.log("OTP verified successfully, completing authentication");
-      
-      // Add a slight delay to ensure the database update has completed
-      await new Promise(resolve => setTimeout(resolve, 500));
-
-      // If OTP is valid, complete sign in WITH the OTP
-      const response = await signIn("credentials", {
+      // After OTP is verified, sign in again with the OTP
+      const signInResponse = await signIn("credentials", {
         email: formData.email,
         password: formData.password,
-        otp: formData.otp,  // Include the OTP in the credentials
+        otp: formData.otp,
         redirect: false,
       });
 
-      console.log("OTP verification sign-in response:", response);
-
-      if (response?.error) {
-        throw new Error(response.error);
+      if (signInResponse?.error) {
+        throw new Error(signInResponse.error);
       }
 
-      // After successful login, redirect to dashboard
-      console.log("Authentication complete, redirecting to:", callbackUrl);
+      // If successful, redirect to the callback URL
       router.push(callbackUrl);
     } catch (err) {
       console.error("OTP verification error:", err);
@@ -255,142 +277,155 @@ export default function LoginPage() {
     }
   };
 
-  const handleResendOtp = async (e: React.MouseEvent) => {
-    e.preventDefault();
-    await requestOtp();
-  };
-
-  if (status === "loading") {
-    return (
-      <div className="flex justify-center items-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-incite-navy"></div>
-      </div>
-    );
-  }
-
   return (
     <AuthCard title="Sign In">
-      {isRegistered && (
-        <div className="mb-6 bg-green-50 border-l-4 border-green-500 p-4 rounded-r">
-          <p className="text-green-700 text-sm">Account created successfully! Please login.</p>
-        </div>
-      )}
-      
-      <form onSubmit={(e) => {
-        e.preventDefault();
-        if (showOtpInput) {
-          verifyOtp();
-        } else {
-          handleSubmit(e);
-        }
-      }} className="space-y-6">
-        {error && (
-          <div className="bg-red-50 border-l-4 border-incite-red p-4 rounded-r">
-            <p className="text-incite-red text-sm">{error}</p>
-          </div>
-        )}
+      <div className="sm:mx-auto sm:w-full sm:max-w-sm">
+        <h2 className="mt-10 text-center text-2xl font-bold leading-9 tracking-tight text-gray-900">
+          Sign in to your account
+        </h2>
+      </div>
 
-        {otpSent && !error && showOtpInput && (
-          <div className="bg-green-50 border-l-4 border-green-500 p-4 rounded-r">
-            <p className="text-green-700 text-sm">
-              A verification code has been sent to your email address.
-            </p>
-          </div>
-        )}
-
-        {showOtpInput ? (
-          <div className="space-y-6">
-            <div className="text-sm text-gray-600 mb-4">
-              <p>This account requires two-factor authentication for additional security.</p>
-              <p className="mt-2">Please enter the verification code sent to <strong>{formData.email}</strong></p>
-            </div>
-            
-            <FormInput
-              id="otp"
-              name="otp"
-              label="Verification Code"
-              type="text"
-              required
-              value={formData.otp}
-              onChange={handleChange}
-              placeholder="000000"
-              autoComplete="one-time-code"
-              inputMode="numeric"
-              icon={
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M10 2a1 1 0 011 1v1.323l3.954 1.582 1.599-.8a1 1 0 01.894 1.79l-1.233.616 1.738 5.42a1 1 0 01-.285 1.05A3.989 3.989 0 0115 15a3.989 3.989 0 01-2.667-1.019 1 1 0 01-.285-1.05l1.715-5.349L11 6.477V16h2a1 1 0 110 2H7a1 1 0 110-2h2V6.477L6.237 7.582l1.715 5.349a1 1 0 01-.285 1.05A3.989 3.989 0 015 15a3.989 3.989 0 01-2.667-1.019 1 1 0 01-.285-1.05l1.738-5.42-1.233-.617a1 1 0 01.894-1.788l1.599.799L9 4.323V3a1 1 0 011-1z" clipRule="evenodd" />
+      <div className="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
+        {isRegistered && (
+          <div className="mb-4 rounded-md bg-green-50 p-4">
+            <div className="flex">
+              <div className="flex-shrink-0">
+                <svg
+                  className="h-5 w-5 text-green-400"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                    clipRule="evenodd"
+                  />
                 </svg>
-              }
-            />
-            
-            <div>
-              <button
-                type="button"
-                onClick={handleResendOtp}
-                disabled={isRequestingOtp}
-                className="text-incite-navy text-sm hover:underline focus:outline-none"
-              >
-                {isRequestingOtp ? "Sending..." : "Resend code"}
-              </button>
+              </div>
+              <div className="ml-3">
+                <p className="text-sm font-medium text-green-800">
+                  Registration successful! Please sign in.
+                </p>
+              </div>
             </div>
           </div>
-        ) : (
-          <>
-        <FormInput
-          id="email"
-          name="email"
-          label="Email address"
-          type="email"
-          required
-          value={formData.email}
-          onChange={handleChange}
-          placeholder="your@email.com"
-          icon={
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-              <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
-              <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
-            </svg>
-          }
-        />
-
-        <FormInput
-          id="password"
-          name="password"
-          label="Password"
-          type="password"
-          required
-          value={formData.password}
-          onChange={handleChange}
-          placeholder="••••••••"
-          icon={
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
-            </svg>
-          }
-        />
-          </>
         )}
 
-        <div className="flex items-center justify-between">
-          <div className="text-sm">
+        {error && (
+          <div className="mb-4 rounded-md bg-red-50 p-4">
+            <div className="flex">
+              <div className="flex-shrink-0">
+                <svg
+                  className="h-5 w-5 text-red-400"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              </div>
+              <div className="ml-3">
+                <p className="text-sm font-medium text-red-800">{error}</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <form className="space-y-6" onSubmit={showOtpInput ? handleVerifyOtp : handleSubmit}>
+          {!showOtpInput ? (
+            <>
+              <FormInput
+                id="email"
+                name="email"
+                type="email"
+                label="Email address"
+                value={formData.email}
+                onChange={handleChange}
+                required
+                autoComplete="email"
+              />
+
+              <FormInput
+                id="password"
+                name="password"
+                type="password"
+                label="Password"
+                value={formData.password}
+                onChange={handleChange}
+                required
+                autoComplete="current-password"
+              />
+
+              <div>
+                <Button
+                  type="submit"
+                  variant="primary"
+                  fullWidth
+                  disabled={isLoading}
+                >
+                  {isLoading ? "Signing in..." : "Sign in"}
+                </Button>
+              </div>
+            </>
+          ) : (
+            <>
+              <FormInput
+                id="otp"
+                name="otp"
+                type="text"
+                label="Verification Code"
+                value={formData.otp}
+                onChange={handleChange}
+                required
+                autoComplete="one-time-code"
+                inputMode="numeric"
+                maxLength={6}
+              />
+
+              <div>
+                <Button
+                  type="submit"
+                  variant="primary"
+                  fullWidth
+                  disabled={isLoading}
+                >
+                  {isLoading ? "Verifying..." : "Verify Code"}
+                </Button>
+              </div>
+
+              <div className="text-sm text-center">
+                <button
+                  onClick={handleResendOtp}
+                  disabled={isRequestingOtp}
+                  className="font-medium text-incite-navy hover:text-blue-500 disabled:opacity-50"
+                >
+                  {isRequestingOtp ? "Sending..." : "Resend Code"}
+                </button>
+              </div>
+            </>
+          )}
+
+          <div className="text-sm text-center">
             <Link
               href="/register"
-              className="font-medium text-incite-navy hover:text-incite-red transition-colors"
+              className="font-medium text-incite-navy hover:text-blue-500"
             >
-              Don&apos;t have an account? Register
+              Don't have an account? Register
             </Link>
           </div>
-        </div>
-
-        <Button
-          type="submit"
-          fullWidth
-          disabled={isLoading}
-        >
-          {isLoading ? "Processing..." : 
-           showOtpInput ? "Verify & Sign In" : "Continue"}
-        </Button>
-      </form>
+        </form>
+      </div>
     </AuthCard>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <LoginForm />
+    </Suspense>
   );
 } 

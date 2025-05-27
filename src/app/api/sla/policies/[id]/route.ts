@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth/next";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { authOptions } from "../../../auth/[...nextauth]/route";
 
 // GET a specific SLA policy
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Check authentication and authorization
@@ -19,10 +19,18 @@ export async function GET(
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    const { id } = params;
+    const { id } = await params;
 
     const policy = await prisma.slaPolicy.findUnique({
       where: { id },
+      include: {
+        organization: {
+          select: {
+            id: true,
+            name: true,
+          }
+        }
+      }
     });
 
     if (!policy) {
@@ -45,7 +53,7 @@ export async function GET(
 // PUT/UPDATE a specific SLA policy
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Check authentication and authorization
@@ -58,7 +66,7 @@ export async function PUT(
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    const { id } = params;
+    const { id } = await params;
     const body = await request.json();
 
     // Validate the request body
@@ -111,10 +119,10 @@ export async function PUT(
   }
 }
 
-// DELETE a specific SLA policy
-export async function DELETE(
+// PATCH/Update a specific SLA policy
+export async function PATCH(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Check authentication and authorization
@@ -127,7 +135,85 @@ export async function DELETE(
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    const { id } = params;
+    const { id } = await params;
+    const body = await request.json();
+
+    // Validate the request body
+    if (body.responseTimeHours !== undefined && body.responseTimeHours < 0) {
+      return NextResponse.json(
+        { error: "Response time cannot be negative" },
+        { status: 400 }
+      );
+    }
+
+    if (body.resolutionTimeHours !== undefined && body.resolutionTimeHours < 0) {
+      return NextResponse.json(
+        { error: "Resolution time cannot be negative" },
+        { status: 400 }
+      );
+    }
+
+    // Check if policy exists
+    const existingPolicy = await prisma.slaPolicy.findUnique({
+      where: { id },
+    });
+
+    if (!existingPolicy) {
+      return NextResponse.json(
+        { error: "SLA policy not found" },
+        { status: 404 }
+      );
+    }
+
+    // Update the policy
+    const updatedPolicy = await prisma.slaPolicy.update({
+      where: { id },
+      data: {
+        name: body.name,
+        description: body.description,
+        responseTimeHours: body.responseTimeHours,
+        resolutionTimeHours: body.resolutionTimeHours,
+        active: body.active,
+        priorityLevel: body.priorityLevel,
+        organizationId: body.organizationId,
+      },
+      include: {
+        organization: {
+          select: {
+            id: true,
+            name: true,
+          }
+        }
+      }
+    });
+
+    return NextResponse.json(updatedPolicy);
+  } catch (error) {
+    console.error("Error updating SLA policy:", error);
+    return NextResponse.json(
+      { error: "Failed to update SLA policy" },
+      { status: 500 }
+    );
+  }
+}
+
+// DELETE a specific SLA policy
+export async function DELETE(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    // Check authentication and authorization
+    const session = await getServerSession(authOptions);
+    if (!session) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    if (session.user.role !== "ADMIN") {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    const { id } = await params;
 
     // Check if policy exists
     const existingPolicy = await prisma.slaPolicy.findUnique({

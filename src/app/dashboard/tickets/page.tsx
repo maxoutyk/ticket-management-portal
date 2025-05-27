@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
@@ -25,7 +25,7 @@ interface Ticket {
   };
 }
 
-export default function TicketsPage() {
+function TicketsContent() {
   const { status, data: session } = useSession();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -198,21 +198,26 @@ export default function TicketsPage() {
                         <span className="text-gray-500 text-xs font-medium mb-1">
                           {ticket.ticketNumber || ticket.id.substring(0, 8)}
                         </span>
-                        <span className="font-medium">{ticket.title}</span>
+                        <Link
+                          href={`/dashboard/tickets/${ticket.id}`}
+                          className="text-incite-navy hover:text-blue-700 font-medium"
+                        >
+                          {ticket.title}
+                        </Link>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span
-                        className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusBadgeClass(
+                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusBadgeClass(
                           ticket.status
                         )}`}
                       >
-                        {ticket.status}
+                        {ticket.status.replace("_", " ")}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span
-                        className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getPriorityBadgeClass(
+                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getPriorityBadgeClass(
                           ticket.priority
                         )}`}
                       >
@@ -221,26 +226,38 @@ export default function TicketsPage() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       {ticket.assignedTo ? (
-                        <div>
-                          <div className="text-sm text-gray-900">{ticket.assignedTo.name}</div>
-                          <div className="text-sm text-gray-500">{ticket.assignedTo.email}</div>
+                        <div className="flex items-center">
+                          <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center">
+                            <span className="text-sm font-medium text-gray-600">
+                              {ticket.assignedTo.name
+                                .split(" ")
+                                .map((n) => n[0])
+                                .join("")}
+                            </span>
+                          </div>
+                          <div className="ml-3">
+                            <div className="text-sm font-medium text-gray-900">
+                              {ticket.assignedTo.name}
+                            </div>
+                            <div className="text-xs text-gray-500">
+                              {ticket.assignedTo.email}
+                            </div>
+                          </div>
                         </div>
                       ) : (
-                        <span className="text-sm text-gray-500">Unassigned</span>
+                        <span className="text-gray-500 text-sm">Unassigned</span>
                       )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {new Date(ticket.createdAt).toLocaleDateString()}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <div className="flex justify-end space-x-2">
-                        <Link
-                          href={`/dashboard/tickets/${ticket.id}`}
-                          className="text-incite-navy hover:text-incite-red"
-                        >
-                          View
-                        </Link>
-                      </div>
+                      <Link
+                        href={`/dashboard/tickets/${ticket.id}`}
+                        className="text-incite-navy hover:text-blue-700"
+                      >
+                        View
+                      </Link>
                     </td>
                   </tr>
                 ))}
@@ -250,5 +267,13 @@ export default function TicketsPage() {
         </div>
       )}
     </PageContainer>
+  );
+}
+
+export default function TicketsPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <TicketsContent />
+    </Suspense>
   );
 } 

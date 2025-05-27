@@ -1,24 +1,19 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { prisma } from "@/lib/prisma";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-
-interface Params {
-  params: {
-    id: string;
-  };
-}
+import { authOptions } from "@/lib/auth";
 
 // POST - Create a new contact person for an organization
-export async function POST(request: Request, { params }: Params) {
+export async function POST(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
-    // Await params to satisfy Next.js 15+ requirement
-    const resolvedParams = await Promise.resolve(params);
-    const organizationId = resolvedParams.id;
+    const { id: organizationId } = await params;
     
     const session = await getServerSession(authOptions);
     
-    if (!session || !session.user) {
+    if (!session?.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
     
